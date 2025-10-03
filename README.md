@@ -1,2 +1,2 @@
-# RedSage-LLM
+# RedSage
 A Cybersecurity Generalist LLM
