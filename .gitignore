@@ -1,3 +1,11 @@
+# Repo specific ignores
+logs
+models
+datasets
+cached_datasets
+personal
+outputs
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[codz]
