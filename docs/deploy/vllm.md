@@ -321,7 +321,8 @@ ENV MODEL_NAME=RISys-Lab/RedSage-8B-DPO
 ENV HOST=0.0.0.0
 ENV PORT=8000
 
-CMD ["--model", "${MODEL_NAME}", "--host", "${HOST}", "--port", "${PORT}"]
+# Use shell form to allow variable substitution
+CMD vllm serve ${MODEL_NAME} --host ${HOST} --port ${PORT}
 ```
 
 **Build and run:**
