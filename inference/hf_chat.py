@@ -11,8 +11,15 @@ Usage:
 """
 
 import argparse
-import torch
-from transformers import AutoModelForCausalLM, AutoTokenizer
+
+try:
+    import torch
+    from transformers import AutoModelForCausalLM, AutoTokenizer
+except ImportError as e:
+    print("Error: Required packages are missing.")
+    print("Install them with: pip install torch transformers accelerate")
+    print(f"Details: {e}")
+    exit(1)
 
 
 def parse_args():
@@ -66,15 +73,24 @@ def load_model(model_name: str, device: str = "auto"):
     """
     print(f"Loading model: {model_name}")
     
-    tokenizer = AutoTokenizer.from_pretrained(model_name)
-    model = AutoModelForCausalLM.from_pretrained(
-        model_name,
-        torch_dtype=torch.bfloat16,
-        device_map=device,
-    )
-    
-    print(f"Model loaded successfully on {model.device}")
-    return model, tokenizer
+    try:
+        tokenizer = AutoTokenizer.from_pretrained(model_name)
+        model = AutoModelForCausalLM.from_pretrained(
+            model_name,
+            torch_dtype=torch.bfloat16,
+            device_map=device,
+        )
+        
+        print(f"Model loaded successfully on {model.device}")
+        return model, tokenizer
+    except Exception as e:
+        print(f"\nError loading model: {e}")
+        print("\nPossible causes:")
+        print("  - Network connectivity issues")
+        print("  - Missing Hugging Face credentials (run: huggingface-cli login)")
+        print("  - Insufficient GPU/CPU memory")
+        print("  - Invalid model name or path")
+        raise
 
 
 def chat_single_turn(
@@ -122,11 +138,9 @@ def chat_single_turn(
             pad_token_id=tokenizer.pad_token_id,
         )
     
-    # Decode the full output
-    full_response = tokenizer.decode(outputs[0], skip_special_tokens=True)
-    
-    # Extract only the assistant's response (remove the prompt)
-    response = full_response[len(tokenizer.decode(inputs.input_ids[0], skip_special_tokens=True)):]
+    # Extract only the assistant's response (skip the input tokens)
+    input_length = inputs.input_ids.shape[1]
+    response = tokenizer.decode(outputs[0][input_length:], skip_special_tokens=True)
     
     return response.strip()
 
