@@ -113,7 +113,9 @@ def chat_single_turn(
         system_prompt: System prompt for the assistant
         max_tokens: Maximum tokens to generate
         temperature: Sampling temperature
-        messages: Optional conversation history (list of message dicts)
+        messages: Optional conversation history (list of message dicts).
+                 Note: This list will be modified in-place by appending
+                 the user message for multi-turn conversations.
         
     Returns:
         str: Generated response
