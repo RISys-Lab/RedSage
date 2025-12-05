@@ -321,8 +321,8 @@ ENV MODEL_NAME=RISys-Lab/RedSage-8B-DPO
 ENV HOST=0.0.0.0
 ENV PORT=8000
 
-# Use shell form to allow variable substitution
-CMD vllm serve ${MODEL_NAME} --host ${HOST} --port ${PORT}
+# Use exec form with sh -c for proper signal handling and variable substitution
+CMD ["sh", "-c", "vllm serve ${MODEL_NAME} --host ${HOST} --port ${PORT}"]
 ```
 
 **Build and run:**
@@ -330,6 +330,15 @@ CMD vllm serve ${MODEL_NAME} --host ${HOST} --port ${PORT}
 ```bash
 docker build -t redsage-vllm .
 docker run --gpus all -p 8000:8000 redsage-vllm
+```
+
+**Override environment variables at runtime:**
+
+```bash
+docker run --gpus all -p 8000:8000 \
+  -e MODEL_NAME=RISys-Lab/RedSage-8B-Ins \
+  -e PORT=8001 \
+  redsage-vllm
 ```
 
 ### Kubernetes Deployment
