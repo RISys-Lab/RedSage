@@ -16,7 +16,7 @@ Usage:
 """
 
 import argparse
-from typing import List, Dict
+from typing import List, Dict, Optional
 
 try:
     from openai import OpenAI
@@ -205,7 +205,7 @@ def interactive_mode(
     model: str,
     max_tokens: int = 512,
     temperature: float = 0.2,
-    system_prompt: str = DEFAULT_SYSTEM_PROMPT,
+    system_prompt: Optional[str] = None,
 ):
     """
     Run an interactive chat session with conversation history.
@@ -222,6 +222,10 @@ def interactive_mode(
     print("=" * 70)
     print("Type 'quit' or 'exit' to end the conversation.")
     print("=" * 70 + "\n")
+    
+    # Set default system prompt if not provided
+    if system_prompt is None:
+        system_prompt = DEFAULT_SYSTEM_PROMPT
     
     # Initialize conversation history with system prompt
     messages = [{"role": "system", "content": system_prompt}]

@@ -11,6 +11,7 @@ Usage:
 """
 
 import argparse
+from typing import Optional, List, Dict
 
 try:
     import torch
@@ -100,7 +101,7 @@ def chat_single_turn(
     system_prompt: str,
     max_tokens: int = 512,
     temperature: float = 0.2,
-    messages: list = None,
+    messages: Optional[List[Dict[str, str]]] = None,
 ):
     """
     Generate a chat response with optional conversation history.
