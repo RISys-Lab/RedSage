@@ -31,14 +31,13 @@ We are releasing RedSage sequentially in four phases. Track progress here (we’
 
 ### 1) Model & Inference
 - [ ] Publish `RedSage-8B-Base` on Hugging Face (weights + model card)
-- [ ] Publish `RedSage-8B-Ins` on Hugging Face (weights + model card)
-- [ ] Publish `RedSage-8B-DPO` on Hugging Face (weights + model card)
-- [ ] Publish `RedSage-8B-CFW` on Hugging Face (weights + model card)
+- [x] Publish `RedSage-8B-Ins` on Hugging Face (weights + model card)
+- [x] Publish `RedSage-8B-DPO` on Hugging Face (weights + model card)
+- [x] Publish `RedSage-8B-CFW` on Hugging Face (weights + model card)
 - [ ] Publish `RedSage-8B-Seed` on Hugging Face (weights + model card)
-- [ ] Provide `inference/hf_chat.py` (Transformers chat example)
-- [ ] Provide `inference/vllm_demo.py` (simple client)
-- [ ] Add **vLLM** serving guide in `docs/deploy/vllm.md`
-- [ ] (Optional) Release quantized variants (GGUF/AWQ/GPTQ) & notes
+- [x] Provide `inference/hf_chat.py` (Transformers chat example)
+- [x] Provide `inference/vllm_demo.py` (simple client)
+- [x] Add **vLLM** serving guide in `docs/deploy/vllm.md`
 
 ### 2) Data
 - [ ] Release **RedSage-Seed** subset (paths, schema, license notes)
