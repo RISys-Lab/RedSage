@@ -100,9 +100,10 @@ def chat_single_turn(
     system_prompt: str,
     max_tokens: int = 512,
     temperature: float = 0.2,
+    messages: list = None,
 ):
     """
-    Generate a single-turn chat response.
+    Generate a chat response with optional conversation history.
     
     Args:
         model: The loaded language model
@@ -111,14 +112,19 @@ def chat_single_turn(
         system_prompt: System prompt for the assistant
         max_tokens: Maximum tokens to generate
         temperature: Sampling temperature
+        messages: Optional conversation history (list of message dicts)
         
     Returns:
         str: Generated response
     """
-    messages = [
-        {"role": "system", "content": system_prompt},
-        {"role": "user", "content": user_message},
-    ]
+    if messages is None:
+        messages = [
+            {"role": "system", "content": system_prompt},
+            {"role": "user", "content": user_message},
+        ]
+    else:
+        # Append the new user message to the conversation history
+        messages.append({"role": "user", "content": user_message})
     
     # Apply chat template
     text = tokenizer.apply_chat_template(
@@ -135,7 +141,7 @@ def chat_single_turn(
             max_new_tokens=max_tokens,
             temperature=temperature,
             do_sample=temperature > 0,
-            pad_token_id=tokenizer.pad_token_id,
+            pad_token_id=tokenizer.pad_token_id or tokenizer.eos_token_id,
         )
     
     # Extract only the assistant's response (skip the input tokens)
@@ -153,7 +159,7 @@ def interactive_chat(
     temperature: float = 0.2,
 ):
     """
-    Run an interactive chat session.
+    Run an interactive chat session with conversation history.
     
     Args:
         model: The loaded language model
@@ -169,13 +175,20 @@ def interactive_chat(
     print("Type 'quit' or 'exit' to end the conversation.")
     print("=" * 70 + "\n")
     
+    # Initialize conversation history with system prompt
+    messages = [{"role": "system", "content": system_prompt}]
+    
     while True:
         try:
             user_input = input("User: ").strip()
             
-            if user_input.lower() in ["quit", "exit", ""]:
+            if user_input.lower() in ["quit", "exit"]:
                 print("Goodbye!")
                 break
+            
+            # Skip empty input
+            if user_input == "":
+                continue
             
             print("\nRedSage: ", end="", flush=True)
             response = chat_single_turn(
@@ -185,7 +198,10 @@ def interactive_chat(
                 system_prompt=system_prompt,
                 max_tokens=max_tokens,
                 temperature=temperature,
+                messages=messages,
             )
+            # Add assistant's response to conversation history
+            messages.append({"role": "assistant", "content": response})
             print(response)
             print()
             

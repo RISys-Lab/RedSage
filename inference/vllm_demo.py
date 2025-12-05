@@ -26,6 +26,10 @@ except ImportError:
     exit(1)
 
 
+# Default system prompt for RedSage
+DEFAULT_SYSTEM_PROMPT = "You are RedSage, a helpful cybersecurity assistant."
+
+
 def parse_args():
     """Parse command line arguments."""
     parser = argparse.ArgumentParser(
@@ -108,6 +112,9 @@ def chat_completion(
         temperature=temperature,
     )
     
+    if not response.choices:
+        raise ValueError("No response generated")
+    
     return response.choices[0].message.content
 
 
@@ -132,7 +139,7 @@ def run_examples(
             "messages": [
                 {
                     "role": "system",
-                    "content": "You are RedSage, a helpful cybersecurity assistant.",
+                    "content": DEFAULT_SYSTEM_PROMPT,
                 },
                 {
                     "role": "user",
@@ -145,7 +152,7 @@ def run_examples(
             "messages": [
                 {
                     "role": "system",
-                    "content": "You are RedSage, a helpful cybersecurity assistant.",
+                    "content": DEFAULT_SYSTEM_PROMPT,
                 },
                 {
                     "role": "user",
@@ -158,7 +165,7 @@ def run_examples(
             "messages": [
                 {
                     "role": "system",
-                    "content": "You are RedSage, a helpful cybersecurity assistant.",
+                    "content": DEFAULT_SYSTEM_PROMPT,
                 },
                 {
                     "role": "user",
@@ -198,15 +205,17 @@ def interactive_mode(
     model: str,
     max_tokens: int = 512,
     temperature: float = 0.2,
+    system_prompt: str = DEFAULT_SYSTEM_PROMPT,
 ):
     """
-    Run an interactive chat session.
+    Run an interactive chat session with conversation history.
     
     Args:
         client: OpenAI client instance
         model: Model name
         max_tokens: Maximum tokens to generate
         temperature: Sampling temperature
+        system_prompt: System prompt for the assistant
     """
     print("\n" + "=" * 70)
     print("RedSage Interactive Chat (vLLM)")
@@ -214,20 +223,23 @@ def interactive_mode(
     print("Type 'quit' or 'exit' to end the conversation.")
     print("=" * 70 + "\n")
     
-    system_prompt = "You are RedSage, a helpful cybersecurity assistant."
+    # Initialize conversation history with system prompt
+    messages = [{"role": "system", "content": system_prompt}]
     
     while True:
         try:
             user_input = input("User: ").strip()
             
-            if user_input.lower() in ["quit", "exit", ""]:
+            if user_input.lower() in ["quit", "exit"]:
                 print("Goodbye!")
                 break
             
-            messages = [
-                {"role": "system", "content": system_prompt},
-                {"role": "user", "content": user_input},
-            ]
+            # Skip empty input
+            if user_input == "":
+                continue
+            
+            # Add user message to conversation history
+            messages.append({"role": "user", "content": user_input})
             
             print("\nRedSage: ", end="", flush=True)
             response = chat_completion(
@@ -237,6 +249,8 @@ def interactive_mode(
                 max_tokens=max_tokens,
                 temperature=temperature,
             )
+            # Add assistant's response to conversation history
+            messages.append({"role": "assistant", "content": response})
             print(response)
             print()
             

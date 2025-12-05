@@ -136,8 +136,13 @@ huggingface-cli login
 
 ### Single Query with Transformers
 
+Note: Run this from the `inference` directory.
+
 ```bash
+cd inference
 python -c "
+import sys
+sys.path.insert(0, '.')
 from hf_chat import load_model, chat_single_turn
 
 model, tokenizer = load_model('RISys-Lab/RedSage-8B-Ins')

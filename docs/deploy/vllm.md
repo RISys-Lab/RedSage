@@ -287,7 +287,8 @@ chat();
 ### LangChain
 
 ```python
-from langchain.chat_models import ChatOpenAI
+# For LangChain >=0.1.0 with langchain-openai package
+from langchain_openai import ChatOpenAI
 from langchain.schema import HumanMessage, SystemMessage
 
 llm = ChatOpenAI(
