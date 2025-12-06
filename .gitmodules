@@ -1,0 +1,3 @@
+[submodule "eval/lighteval"]
+	path = eval/lighteval
+	url = https://github.com/naufalso/lighteval.git
