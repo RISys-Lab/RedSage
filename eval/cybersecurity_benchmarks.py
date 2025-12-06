@@ -1014,9 +1014,28 @@ for subset in REDSAGE_MCQ_SUBSETS_5K:
 
 
 
+
+def mmlu_helm_direct(line, task_name: str = None):
+    subject = line["subject"]
+    instruction = f"The following are multiple choice questions (with answers) about {subject.replace('_', ' ')}. Answer with the option letter from the given choices directly."
+    query = f"{instruction}\n\nQuestion: {line['question']}"
+    query += "".join([f"\n{key}. {choice}" for key, choice in zip(ENGLISH_LETTER_INDICES, line["choices"])])
+    query += "\nAnswer:"
+
+    gold_ix = ENGLISH_LETTER_INDICES.index(line["answer"]) if isinstance(line["answer"], str) else line["answer"]
+
+    return Doc(
+        task_name=task_name,
+        query=query,
+        choices=[" A", " B", " C", " D"],
+        gold_index=gold_ix,
+        instruction=instruction,
+    )
+
+
 mmlu_computer_security_direct = LightevalTaskConfig(
     name="mmlu:cs_security",
-    prompt_function=default_prompts.mmlu_helm,
+    prompt_function=mmlu_helm_direct,
     hf_repo="lighteval/mmlu",
     hf_subset="computer_security",
     hf_avail_splits=["auxiliary_train", "test", "validation", "dev"],
