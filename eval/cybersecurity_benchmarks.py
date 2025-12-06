@@ -1,17 +1,17 @@
 # MIT License
-
+#
 # Copyright (c) 2024 The HuggingFace Team
-
+#
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
 # in the Software without restriction, including without limitation the rights
 # to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
 # copies of the Software, and to permit persons to whom the Software is
 # furnished to do so, subject to the following conditions:
-
+#
 # The above copyright notice and this permission notice shall be included in all
 # copies or substantial portions of the Software.
-
+#
 # THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 # IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 # FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -22,25 +22,43 @@
 
 
 import logging
-from typing import Dict, List, Optional, Tuple, Union
-import numpy as np
 import re
 from functools import partial
+from typing import Dict, List, Optional, Tuple
+
+import numpy as np
 from aenum import extend_enum
 
 from lighteval.metrics.metrics import Metrics
-from lighteval.tasks.lighteval_task import LightevalTaskConfig
-from lighteval.tasks.requests import Doc, SamplingMethod
+from lighteval.metrics.metrics_sample import SampleLevelComputation
 from lighteval.metrics.utils.metric_utils import SampleLevelMetric
 from lighteval.models.model_output import ModelResponse
-from lighteval.metrics.metrics_sample import SampleLevelComputation
-from  lighteval.tasks import default_prompts
+from lighteval.tasks.lighteval_task import LightevalTaskConfig
+from lighteval.tasks.requests import Doc, SamplingMethod
+
+logger = logging.getLogger(__name__)
+
+# ============ Constants ============
 
 ENGLISH_LETTER_INDICES = ["A", "B", "C", "D"]
 SECURE_BOOL_INDICES = ["T", "F", "X"]
+SECEVAL_ENGLISH_LETTER_INDICES = [
+    "A", "B", "C", "D", "AB", "AC", "AD", "BC", "BD", "CD", 
+    "ABC", "ABD", "ACD", "BCD", "ABCD", ""
+]
 
-
-logger = logging.getLogger(__name__)
+SECEVAL_FEW_SHOT_EXAMPLES = """
+Question: You are reviewing a piece of code to identify potential vulnerabilities related to NULL pointer dereferences. Which of the following strategies should you consider implementing to mitigate the risk? Choose all that apply. A: Use a programming language that inherently manages pointers and prevents direct memory access. B: Apply input validation to all variables and data stores that receive data from external sources to ensure they are initialized to expected values. C: Explicitly initialize all variables and other data stores, either during declaration or just before the first usage. D: Implement a custom memory management system that automatically assigns a unique identifier to each pointer.
+Answer: ABC 
+Question: Analyze the code snippet provided. Which of the following practices should be implemented in a multithreaded application to prevent NULL pointer dereference vulnerabilities? Select all that apply.A: Ensure that proper locking APIs are used to lock the pointer before the if statement and unlock when it has finished to prevent race conditions. B: Check the return value of all functions that return a value, including network-related functions, and verify that it is non-null before using it.C: Use automated static analysis tools that target this type of weakness, understanding that while not perfect, they can still be effective.D: Verify that a non-nil 'response' is present before deferring 'response.Body.Close()' to handle cases where the 'Do' method returns an error.
+Answer: ABCD 
+Question: In a bank management application, a method called `createBankAccount` allows the creation of bank accounts without user identity verification or authority checks. Based on common security practices, which of the following measures would improve security?A: Implement a centralized authentication mechanism for operations that require a proven user identity.B: Duplicate client-side authentication checks on the server side to prevent bypassing of security checks.C: Use a vetted library or framework that offers robust authentication capabilities to prevent security weaknesses.D: Apply strong authentication requirements for all users accessing data stored in the cloud.
+Answer: ABCD
+Question: What are the potential consequences if an application handling sensitive data does not require authentication for data access, and what are the appropriate mitigation strategies?A: Attackers could easily access sensitive data from any location; require strong authentication for data access using cloud provider controls.B: Security checks might be bypassed if only performed on the client side; implement checks on both client and server sides.C: Unauthenticated users could alter product functionality; do not use authentication for critical functionality in products.D: Sensitive data may be accessed without proper credentials; utilize authentication capabilities provided by the framework or operating system.
+Answer: ABD
+Question: To prevent security vulnerabilities related to deserialization of untrusted data in a Java application, which of the following practices should a developer implement?A: Use the signing/sealing features of the programming language to assure that deserialized data has not been tainted.B: Explicitly define a final readObject() method to throw an exception and prevent deserialization.C: Populate a new object by deserializing data to ensure data flows through safe input validation functions.D: Make fields transient to protect them from deserialization and prevent carrying over sensitive variables.
+Answer: ABCD
+""".strip()
 
 # ============ Utility Functions ============
 
@@ -123,7 +141,9 @@ def validate_mcq_line(line: Dict, required_keys: List[str]) -> None:
     missing_keys = [key for key in required_keys if key not in line]
     if missing_keys:
         raise ValueError(f"Missing required keys in dataset line: {missing_keys}")
-    
+
+
+# ============ Metrics ============
 
 class MCQAcc(SampleLevelComputation):
     """Computes accuracy for CTI-MCQ task by extracting single letter A-D from model response."""
@@ -177,112 +197,6 @@ class MCQAcc(SampleLevelComputation):
 
         gold_answer = doc.choices[doc.gold_index].strip().upper()
         return float(answer.upper() == gold_answer)
-    
-# ============ CTI-Bench Evaluation Tasks ============
-
-def cti_mcq_prompt_fn(line: Dict, task_name: Optional[str] = None, is_direct_answer: bool = True) -> Doc:
-    """Create prompt for CTI-MCQ task."""
-    validate_mcq_line(line, ["Prompt", "GT"])
-    
-    instruction = "You are given a multiple-choice question (MCQ) from a Cyber Threat Intelligence (CTI) knowledge benchmark dataset. Your task is to choose the best option among the four provided. Return your answer as a single uppercase letter: A, B, C, or D."
-    prompt = line['Prompt']
-
-    if is_direct_answer:
-        prompt = prompt.replace(
-            "The last line of your answer should contain only the single letter corresponding to the best option, with no additional text.",
-            "Please provide the letter corresponding to the best option (A, B, C, D), with no additional text. **Answer:**"
-        )
-        
-    solution_letter = line['GT']
-
-    doc_choices = [f" {letter}" for letter in ENGLISH_LETTER_INDICES]
-
-    try:
-        gold_index = ENGLISH_LETTER_INDICES.index(solution_letter.strip().upper())
-    except ValueError:
-        raise ValueError(
-            f"Invalid solution letter '{solution_letter}' in dataset. Expected one of {ENGLISH_LETTER_INDICES}."
-        )
-
-    return Doc(
-        task_name=task_name,
-        query=prompt,
-        choices=doc_choices,
-        gold_index=gold_index,
-        specific={"url": line.get("URL"), "Question": line.get("Question")},
-        instruction=instruction,
-    )
-
-def cti_rcm_prompt_fn(line: Dict, task_name: Optional[str] = None, is_direct_answer: bool = True) -> Doc:
-    """Create prompt for CTI-RCM task."""
-    validate_mcq_line(line, ["Description", "Prompt", "GT"])
-    
-    instruction = "Analyze the following CVE description and map it to the appropriate CWE."
-    prompt = line['Prompt']
-
-    if is_direct_answer:
-        cve_description = line["Description"]
-        prompt = f"{instruction}\n\nCVE Description: {cve_description}. Directly provide the CWE ID (e.g., CWE-XXX) without any explanation. CWE ID is:"
-
-    solution = line['GT']
-
-    return Doc(
-        task_name=task_name,
-        query=prompt,
-        choices=[solution],
-        gold_index=0,
-        instruction=instruction,
-        specific={"url": line.get("URL"), "Description": line.get("Description"), "GT": solution},
-    )
-
-
-def cti_vsp_prompt_fn(line: Dict, task_name: Optional[str] = None, is_direct_answer: bool = True) -> Doc:
-    """Create prompt for CTI-VSP task."""
-    validate_mcq_line(line, ["Description", "Prompt", "GT"])
-
-    instruction = "Analyze the following CVE description and calculate the CVSS v3.1 Base Score. Determine the values for each base metric: AV, AC, PR, UI, S, C, I, and A. Summarize each metric's value and provide the final CVSS v3.1 vector string. Valid options for each metric are as follows: - **Attack Vector (AV)**: Network (N), Adjacent (A), Local (L), Physical (P) - **Attack Complexity (AC)**: Low (L), High (H) - **Privileges Required (PR)**: None (N), Low (L), High (H) - **User Interaction (UI)**: None (N), Required (R) - **Scope (S)**: Unchanged (U), Changed (C) - **Confidentiality (C)**: None (N), Low (L), High (H) - **Integrity (I)**: None (N), Low (L), High (H) - **Availability (A)**: None (N), Low (L), High (H) Summarize each metric's value and provide the final CVSS v3.1 vector string. Ensure the final line of your response contains only the CVSS v3 Vector String in the following format: Example format: CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H"
-
-    prompt = line['Prompt']
-    solution = line['GT']
-
-    if is_direct_answer:
-        cve_description = line["Description"]
-        prompt = f"{instruction}\n\nCVE Description: {cve_description} The CVSS v3.1 vector string is"    
-
-    return Doc(
-        task_name=task_name,
-        query=prompt,
-        choices=[solution],
-        gold_index=0,
-        specific={"url": line.get("URL"), "Description": line.get("Description"), "GT": solution},
-        instruction=instruction,
-    )
-
-
-def cti_ate_prompt_fn(line: Dict, task_name: Optional[str] = None, is_direct_answer: bool = True) -> Doc:
-    """Create prompt for CTI-ATE task."""
-    validate_mcq_line(line, ["Prompt", "GT"])
-    
-    instruction = "Extract all MITRE Enterprise attack patterns from the following text and map them to their corresponding MITRE technique IDs. Provide reasoning for each identification. Ensure the final line contains only the IDs for the main techniques, separated by commas, excluding any subtechnique IDs. MITRE Enterprise IDs are given below as reference."
-    prompt = line['Prompt']
-    solution = line['GT']
-
-    if is_direct_answer:
-        prompt = f"{prompt}\n**Extracted Mitre IDs**:"
-
-    return Doc(
-        task_name=task_name,
-        query=prompt,
-        choices=[solution],
-        gold_index=0,
-        specific={
-            "url": line.get("URL"), 
-            "Platform": line.get('Platform'), 
-            "Description": line.get("Description"), 
-            "GT": solution
-        },
-        instruction=instruction,
-    )
 
 
 class RCMAcc(SampleLevelComputation):
@@ -417,8 +331,139 @@ regex_mcq_metrics = SampleLevelMetric(
     corpus_level_fn=np.mean,
 )
 
+cti_rcm_metrics = SampleLevelMetric(
+    metric_name="acc",
+    higher_is_better=True,
+    category=SamplingMethod.GENERATIVE,
+    sample_level_fn=RCMAcc(),
+    corpus_level_fn=np.mean,
+)
+
 extend_enum(Metrics, "regex_mcq_acc", regex_mcq_metrics)
 
+
+# ============ Prompt Functions ============
+
+def mmlu_helm_direct(line, task_name: str = None):
+    subject = line["subject"]
+    instruction = f"The following are multiple choice questions (with answers) about {subject.replace('_', ' ')}. Answer with the option letter from the given choices directly."
+    query = f"{instruction}\n\nQuestion: {line['question']}"
+    query += "".join([f"\n{key}. {choice}" for key, choice in zip(ENGLISH_LETTER_INDICES, line["choices"])])
+    query += "\nAnswer:"
+
+    gold_ix = ENGLISH_LETTER_INDICES.index(line["answer"]) if isinstance(line["answer"], str) else line["answer"]
+
+    return Doc(
+        task_name=task_name,
+        query=query,
+        choices=[" A", " B", " C", " D"],
+        gold_index=gold_ix,
+        instruction=instruction,
+    )
+
+def cti_mcq_prompt_fn(line: Dict, task_name: Optional[str] = None, is_direct_answer: bool = True) -> Doc:
+    """Create prompt for CTI-MCQ task."""
+    validate_mcq_line(line, ["Prompt", "GT"])
+    
+    instruction = "You are given a multiple-choice question (MCQ) from a Cyber Threat Intelligence (CTI) knowledge benchmark dataset. Your task is to choose the best option among the four provided. Return your answer as a single uppercase letter: A, B, C, or D."
+    prompt = line['Prompt']
+
+    if is_direct_answer:
+        prompt = prompt.replace(
+            "The last line of your answer should contain only the single letter corresponding to the best option, with no additional text.",
+            "Please provide the letter corresponding to the best option (A, B, C, D), with no additional text. **Answer:**"
+        )
+        
+    solution_letter = line['GT']
+
+    doc_choices = [f" {letter}" for letter in ENGLISH_LETTER_INDICES]
+
+    try:
+        gold_index = ENGLISH_LETTER_INDICES.index(solution_letter.strip().upper())
+    except ValueError:
+        raise ValueError(
+            f"Invalid solution letter '{solution_letter}' in dataset. Expected one of {ENGLISH_LETTER_INDICES}."
+        )
+
+    return Doc(
+        task_name=task_name,
+        query=prompt,
+        choices=doc_choices,
+        gold_index=gold_index,
+        specific={"url": line.get("URL"), "Question": line.get("Question")},
+        instruction=instruction,
+    )
+
+def cti_rcm_prompt_fn(line: Dict, task_name: Optional[str] = None, is_direct_answer: bool = True) -> Doc:
+    """Create prompt for CTI-RCM task."""
+    validate_mcq_line(line, ["Description", "Prompt", "GT"])
+    
+    instruction = "Analyze the following CVE description and map it to the appropriate CWE."
+    prompt = line['Prompt']
+
+    if is_direct_answer:
+        cve_description = line["Description"]
+        prompt = f"{instruction}\n\nCVE Description: {cve_description}. Directly provide the CWE ID (e.g., CWE-XXX) without any explanation. CWE ID is:"
+
+    solution = line['GT']
+
+    return Doc(
+        task_name=task_name,
+        query=prompt,
+        choices=[solution],
+        gold_index=0,
+        instruction=instruction,
+        specific={"url": line.get("URL"), "Description": line.get("Description"), "GT": solution},
+    )
+
+
+def cti_vsp_prompt_fn(line: Dict, task_name: Optional[str] = None, is_direct_answer: bool = True) -> Doc:
+    """Create prompt for CTI-VSP task."""
+    validate_mcq_line(line, ["Description", "Prompt", "GT"])
+
+    instruction = "Analyze the following CVE description and calculate the CVSS v3.1 Base Score. Determine the values for each base metric: AV, AC, PR, UI, S, C, I, and A. Summarize each metric's value and provide the final CVSS v3.1 vector string. Valid options for each metric are as follows: - **Attack Vector (AV)**: Network (N), Adjacent (A), Local (L), Physical (P) - **Attack Complexity (AC)**: Low (L), High (H) - **Privileges Required (PR)**: None (N), Low (L), High (H) - **User Interaction (UI)**: None (N), Required (R) - **Scope (S)**: Unchanged (U), Changed (C) - **Confidentiality (C)**: None (N), Low (L), High (H) - **Integrity (I)**: None (N), Low (L), High (H) - **Availability (A)**: None (N), Low (L), High (H) Summarize each metric's value and provide the final CVSS v3.1 vector string. Ensure the final line of your response contains only the CVSS v3 Vector String in the following format: Example format: CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H"
+
+    prompt = line['Prompt']
+    solution = line['GT']
+
+    if is_direct_answer:
+        cve_description = line["Description"]
+        prompt = f"{instruction}\n\nCVE Description: {cve_description} The CVSS v3.1 vector string is"    
+
+    return Doc(
+        task_name=task_name,
+        query=prompt,
+        choices=[solution],
+        gold_index=0,
+        specific={"url": line.get("URL"), "Description": line.get("Description"), "GT": solution},
+        instruction=instruction,
+    )
+
+
+def cti_ate_prompt_fn(line: Dict, task_name: Optional[str] = None, is_direct_answer: bool = True) -> Doc:
+    """Create prompt for CTI-ATE task."""
+    validate_mcq_line(line, ["Prompt", "GT"])
+    
+    instruction = "Extract all MITRE Enterprise attack patterns from the following text and map them to their corresponding MITRE technique IDs. Provide reasoning for each identification. Ensure the final line contains only the IDs for the main techniques, separated by commas, excluding any subtechnique IDs. MITRE Enterprise IDs are given below as reference."
+    prompt = line['Prompt']
+    solution = line['GT']
+
+    if is_direct_answer:
+        prompt = f"{prompt}\n**Extracted Mitre IDs**:"
+
+    return Doc(
+        task_name=task_name,
+        query=prompt,
+        choices=[solution],
+        gold_index=0,
+        specific={
+            "url": line.get("URL"), 
+            "Platform": line.get('Platform'), 
+            "Description": line.get("Description"), 
+            "GT": solution
+        },
+        instruction=instruction,
+    )
 
 def cybermetrics_mcq_prompt_fn(line: Dict, task_name: Optional[str] = None) -> Doc:
     """Create prompt for CyberMetrics MCQ task."""
@@ -447,145 +492,6 @@ def cybermetrics_mcq_prompt_fn(line: Dict, task_name: Optional[str] = None) -> D
         gold_index=gold_index,
     )
 
-class CyberMetricEvalTask(LightevalTaskConfig):
-    """Configuration for CyberMetrics evaluation tasks."""
-
-    def __init__(self, name: str, hf_subset: str, log_prob: bool = True):
-        if log_prob:
-            metrics = [Metrics.loglikelihood_acc]
-            generation_size = -1
-            stop_sequence = None
-        else:
-            metrics = [
-                Metrics.exact_match,
-                regex_mcq_metrics
-            ]
-            generation_size = 100
-            stop_sequence = ["\n"]
-
-        super().__init__(
-            name=name,
-            hf_subset=hf_subset,
-            prompt_function=cybermetrics_mcq_prompt_fn,
-            hf_repo="RISys-Lab/cybermetrics_mcqa",
-            metrics=metrics,
-            hf_avail_splits=["train"],
-            evaluation_splits=["train"],
-            few_shots_split=None,
-            few_shots_select=None,
-            generation_size=generation_size,
-            stop_sequence=stop_sequence,
-        )
-
-
-CYBERMETRICS_TASKS = [
-    CyberMetricEvalTask(name="cybermetrics:80", hf_subset="cyberMetric_80"),
-    CyberMetricEvalTask(name="cybermetrics:500", hf_subset="cyberMetric_500"),
-    CyberMetricEvalTask(name="cybermetrics:2000", hf_subset="cyberMetric_2000"),
-    CyberMetricEvalTask(name="cybermetrics:10000", hf_subset="cyberMetric_10000"),
-    CyberMetricEvalTask(name="cybermetrics:80_em", hf_subset="cyberMetric_80", log_prob=False),
-    CyberMetricEvalTask(name="cybermetrics:500_em", hf_subset="cyberMetric_500", log_prob=False),
-    CyberMetricEvalTask(name="cybermetrics:2000_em", hf_subset="cyberMetric_2000", log_prob=False),
-    CyberMetricEvalTask(name="cybermetrics:10000_em", hf_subset="cyberMetric_10000", log_prob=False),
-]
-
-cti_rcm_metrics = SampleLevelMetric(
-    metric_name="acc",
-    higher_is_better=True,
-    category=SamplingMethod.GENERATIVE,
-    sample_level_fn=RCMAcc(),
-    corpus_level_fn=np.mean,
-)
-
-class CustomCTIBenchEvalTask(LightevalTaskConfig):
-    """Configuration for CTI-Bench evaluation tasks."""
-
-    def __init__(self, name: str, hf_subset: str):
-        if name == "cti_bench:cti-mcq_ori":
-            prompt_fn = partial(cti_mcq_prompt_fn, is_direct_answer=False)
-            metrics = [regex_mcq_metrics]
-            generation_size = 1024
-            stop_sequence = []
-        elif name == "cti_bench:cti-mcq_em":
-            prompt_fn = cti_mcq_prompt_fn
-            metrics = [regex_mcq_metrics]
-            generation_size = 100
-            stop_sequence = ["\n"]
-        elif name == "cti_bench:cti-mcq":
-            prompt_fn = cti_mcq_prompt_fn
-            metrics = [Metrics.loglikelihood_acc]
-            generation_size = -1
-            stop_sequence = None
-        elif name == "cti_bench:cti-rcm_ori":
-            prompt_fn = partial(cti_rcm_prompt_fn, is_direct_answer=False)
-            metrics = [cti_rcm_metrics]
-            generation_size = 512
-            stop_sequence = []
-        elif name == "cti_bench:cti-rcm":
-            prompt_fn = cti_rcm_prompt_fn
-            metrics = [cti_rcm_metrics]
-            generation_size = 100
-            stop_sequence = ["\n"]
-        # elif name == "cti_bench:cti-vsp_ori":
-        #     try:
-        #         from cvss import CVSS3  # noqa: F401
-        #     except ImportError:
-        #         logger.error("CVSS library not available. Install with: pip install cvss")
-        #         raise ImportError("CVSS library is required for CTI-VSP evaluation.")
-        #     prompt_fn = partial(cti_vsp_prompt_fn, is_direct_answer=False)
-        #     metrics = [cti_vsp_norm_metrics, cti_vsp_mad_metrics]
-        #     generation_size = 512
-        #     stop_sequence = []
-        # elif name == "cti_bench:cti-vsp":
-        #     try:
-        #         from cvss import CVSS3  # noqa: F401
-        #     except ImportError:
-        #         logger.error("CVSS library not available. Install with: pip install cvss")
-        #         raise ImportError("CVSS library is required for CTI-VSP evaluation.")
-        #     prompt_fn = cti_vsp_prompt_fn
-        #     metrics = [cti_vsp_norm_metrics, cti_vsp_mad_metrics]
-        #     generation_size = 100
-        #     stop_sequence = ["\n"]
-        # elif name == "cti_bench:cti-ate_ori":
-        #     prompt_fn = partial(cti_ate_prompt_fn, is_direct_answer=False)
-        #     metrics = [mitre_technique_metrics]
-        #     generation_size = 512
-        #     stop_sequence = []
-        # elif name == "cti_bench:cti-ate":
-        #     prompt_fn = cti_ate_prompt_fn
-        #     metrics = [mitre_technique_metrics]
-        #     generation_size = 200
-        #     stop_sequence = ["\n"]
-        else:
-            raise ValueError(f"Unknown task name '{name}' for CTI-Bench evaluation task.")
-        super().__init__(
-            name=name,
-            hf_subset=hf_subset,
-            prompt_function=prompt_fn,
-            hf_repo="AI4Sec/cti-bench",
-            metrics=metrics,
-            hf_avail_splits=["test"],
-            evaluation_splits=["test"],
-            few_shots_split=None,
-            few_shots_select=None,
-            generation_size=generation_size,
-            stop_sequence=stop_sequence,
-        )
-
-# CTI-Bench tasks
-CTIBENCH_TASKS = [
-    CustomCTIBenchEvalTask(name="cti_bench:cti-mcq_ori", hf_subset="cti-mcq"),
-    CustomCTIBenchEvalTask(name="cti_bench:cti-mcq_em", hf_subset="cti-mcq"),
-    CustomCTIBenchEvalTask(name="cti_bench:cti-mcq", hf_subset="cti-mcq"),
-    CustomCTIBenchEvalTask(name="cti_bench:cti-rcm_ori", hf_subset="cti-rcm"),
-    CustomCTIBenchEvalTask(name="cti_bench:cti-rcm", hf_subset="cti-rcm"),
-#     CustomCTIBenchEvalTask(name="cti_bench:cti-vsp_ori", hf_subset="cti-vsp"),
-#     CustomCTIBenchEvalTask(name="cti_bench:cti-vsp", hf_subset="cti-vsp"),
-#     CustomCTIBenchEvalTask(name="cti_bench:cti-ate_ori", hf_subset="cti-ate"),
-#     CustomCTIBenchEvalTask(name="cti_bench:cti-ate", hf_subset="cti-ate"),
-]
-
-# ====== SECURE ======
 def secure_mcq_prompt_fn(line: Dict, task_name: Optional[str] = None) -> Doc:
     """
     Processes a line from the Secure MCQ dataset to create a Doc object for MMLU-style evaluation.
@@ -668,37 +574,6 @@ def secure_bool_prompt_fn(line: Dict, task_name: Optional[str] = None) -> Doc:
         specific={"question": question, "url": line.get("url", "")},
     )
 
-class SECUREEvalTask(LightevalTaskConfig):
-    """Configuration for SECURE evaluation tasks."""
-
-    def __init__(self, name: str, hf_subset: str, log_prob: bool = True):
-
-        if hf_subset in ["MAET", "CWET"]:
-            prompt_fn = secure_mcq_prompt_fn
-
-        elif hf_subset in ["KCV", "VOOD"]:
-            prompt_fn = secure_bool_prompt_fn
-        else:
-            raise ValueError(f"Unknown subset '{hf_subset}' for SECURE evaluation task.")
-
-        super().__init__(
-            name=name,
-            hf_subset=hf_subset,
-            prompt_function=prompt_fn,
-            hf_repo="RISys-Lab/SECURE_Benchmark",
-            metrics=[Metrics.loglikelihood_acc] if log_prob else ([
-                Metrics.exact_match,
-            ] + ([regex_mcq_metrics] if hf_subset in ["MAET", "CWET"] else [])),
-            hf_avail_splits=["val", "test"],
-            evaluation_splits=["test"],
-            few_shots_split="val",
-            few_shots_select="sequential",
-            generation_size=-1 if log_prob else 100,
-            stop_sequence= None if log_prob else ["\n"],
-        )
-
-# ========== SecBench =========
-
 def secbench_mcq_prompt_fn(line: Dict, task_name: Optional[str] = None) -> Doc:
     """
     Processes a line from the SECBENCH MCQ dataset to create a Doc object for MMLU-style evaluation.
@@ -750,36 +625,6 @@ def secbench_mcq_prompt_fn(line: Dict, task_name: Optional[str] = None) -> Doc:
         instruction=instructions,
     )
 
-class SecBenchEvalTask(LightevalTaskConfig):
-    """Configuration for SecBench evaluation tasks."""
-
-    def __init__(self, name: str, hf_subset: str, log_prob: bool = True):
-        super().__init__(
-            name=name,
-            hf_subset=hf_subset,
-            prompt_function=secbench_mcq_prompt_fn,
-            hf_repo="RISys-Lab/SecBench",
-            metrics=[Metrics.loglikelihood_acc] if log_prob else [
-                Metrics.exact_match,
-                regex_mcq_metrics
-            ],
-            hf_avail_splits=["val", "test"],
-            evaluation_splits=["test"],
-            few_shots_split="val",
-            few_shots_select="sequential",
-            generation_size=-1 if log_prob else 100,
-            stop_sequence= None if log_prob else ["\n"],
-        )
-
-
-# ====== SecBench Tasks ======
-SECEVAL_ENGLISH_LETTER_INDICES = [
-    "A", "B", "C", "D", "AB", "AC", "AD", "BC", "BD", "CD", 
-    "ABC", "ABD", "ACD", "BCD", "ABCD", ""
-]
-
-
-
 def seceval_prompt_fn(line: Dict, task_name: Optional[str] = None, is_few_shot: bool = True) -> Optional[Doc]:
     """Create prompt for SecEval MCQA task (multi-answer)."""
     validate_mcq_line(line, ["question", "answer", "choices"])
@@ -808,47 +653,6 @@ def seceval_prompt_fn(line: Dict, task_name: Optional[str] = None, is_few_shot: 
         instruction=instruction,
         specific={"id": line.get("id"), "topic": line.get("topics")},
     )
-
-SECEVAL_FEW_SHOT_EXAMPLES = """
-Question: You are reviewing a piece of code to identify potential vulnerabilities related to NULL pointer dereferences. Which of the following strategies should you consider implementing to mitigate the risk? Choose all that apply. A: Use a programming language that inherently manages pointers and prevents direct memory access. B: Apply input validation to all variables and data stores that receive data from external sources to ensure they are initialized to expected values. C: Explicitly initialize all variables and other data stores, either during declaration or just before the first usage. D: Implement a custom memory management system that automatically assigns a unique identifier to each pointer.
-Answer: ABC 
-Question: Analyze the code snippet provided. Which of the following practices should be implemented in a multithreaded application to prevent NULL pointer dereference vulnerabilities? Select all that apply.A: Ensure that proper locking APIs are used to lock the pointer before the if statement and unlock when it has finished to prevent race conditions. B: Check the return value of all functions that return a value, including network-related functions, and verify that it is non-null before using it.C: Use automated static analysis tools that target this type of weakness, understanding that while not perfect, they can still be effective.D: Verify that a non-nil 'response' is present before deferring 'response.Body.Close()' to handle cases where the 'Do' method returns an error.
-Answer: ABCD 
-Question: In a bank management application, a method called `createBankAccount` allows the creation of bank accounts without user identity verification or authority checks. Based on common security practices, which of the following measures would improve security?A: Implement a centralized authentication mechanism for operations that require a proven user identity.B: Duplicate client-side authentication checks on the server side to prevent bypassing of security checks.C: Use a vetted library or framework that offers robust authentication capabilities to prevent security weaknesses.D: Apply strong authentication requirements for all users accessing data stored in the cloud.
-Answer: ABCD
-Question: What are the potential consequences if an application handling sensitive data does not require authentication for data access, and what are the appropriate mitigation strategies?A: Attackers could easily access sensitive data from any location; require strong authentication for data access using cloud provider controls.B: Security checks might be bypassed if only performed on the client side; implement checks on both client and server sides.C: Unauthenticated users could alter product functionality; do not use authentication for critical functionality in products.D: Sensitive data may be accessed without proper credentials; utilize authentication capabilities provided by the framework or operating system.
-Answer: ABD
-Question: To prevent security vulnerabilities related to deserialization of untrusted data in a Java application, which of the following practices should a developer implement?A: Use the signing/sealing features of the programming language to assure that deserialized data has not been tainted.B: Explicitly define a final readObject() method to throw an exception and prevent deserialization.C: Populate a new object by deserializing data to ensure data flows through safe input validation functions.D: Make fields transient to protect them from deserialization and prevent carrying over sensitive variables.
-Answer: ABCD
-""".strip()
-
-class SecEvalMCQATask(LightevalTaskConfig):
-    """Configuration for SecEval MCQA task."""
-
-    def __init__(self, name: str = "seceval:mcqa"):
-        
-        if name == "seceval:mcqa":
-            prompt_fn = seceval_prompt_fn
-        elif name == "seceval:mcqa_0s":
-            prompt_fn = partial(seceval_prompt_fn, is_few_shot=False)
-        else:
-            raise ValueError(f"Unknown task name '{name}' for SecEval MCQA evaluation task.")
-
-        super().__init__(
-            name=name,
-            hf_subset="default",
-            prompt_function=prompt_fn,
-            hf_repo="RISys-Lab/seceval",
-            metrics=[Metrics.exact_match],  # Fixed: was 'metric'
-            hf_avail_splits=["train"],
-            evaluation_splits=["train"],
-            few_shots_split=None,
-            few_shots_select=None,
-            generation_size=512,
-            stop_sequence=["\n"]
-        )
-
-# ====== RedSage MCQ ======
 
 def cybersec_prompt_fn(line: Dict, task_name: Optional[str] = None, include_context: bool = True) -> Doc:
     """
@@ -909,6 +713,165 @@ def cybersec_prompt_fn(line: Dict, task_name: Optional[str] = None, include_cont
         instruction=instructions,
     )
 
+
+# ============ Task Configurations ============
+
+class CyberMetricEvalTask(LightevalTaskConfig):
+    """Configuration for CyberMetrics evaluation tasks."""
+
+    def __init__(self, name: str, hf_subset: str, log_prob: bool = True):
+        if log_prob:
+            metrics = [Metrics.loglikelihood_acc]
+            generation_size = -1
+            stop_sequence = None
+        else:
+            metrics = [
+                Metrics.exact_match,
+                regex_mcq_metrics
+            ]
+            generation_size = 100
+            stop_sequence = ["\n"]
+
+        super().__init__(
+            name=name,
+            hf_subset=hf_subset,
+            prompt_function=cybermetrics_mcq_prompt_fn,
+            hf_repo="RISys-Lab/cybermetrics_mcqa",
+            metrics=metrics,
+            hf_avail_splits=["train"],
+            evaluation_splits=["train"],
+            few_shots_split=None,
+            few_shots_select=None,
+            generation_size=generation_size,
+            stop_sequence=stop_sequence,
+        )
+
+
+class CustomCTIBenchEvalTask(LightevalTaskConfig):
+    """Configuration for CTI-Bench evaluation tasks."""
+
+    def __init__(self, name: str, hf_subset: str):
+        if name == "cti_bench:cti-mcq_ori":
+            prompt_fn = partial(cti_mcq_prompt_fn, is_direct_answer=False)
+            metrics = [regex_mcq_metrics]
+            generation_size = 1024
+            stop_sequence = []
+        elif name == "cti_bench:cti-mcq_em":
+            prompt_fn = cti_mcq_prompt_fn
+            metrics = [regex_mcq_metrics]
+            generation_size = 100
+            stop_sequence = ["\n"]
+        elif name == "cti_bench:cti-mcq":
+            prompt_fn = cti_mcq_prompt_fn
+            metrics = [Metrics.loglikelihood_acc]
+            generation_size = -1
+            stop_sequence = None
+        elif name == "cti_bench:cti-rcm_ori":
+            prompt_fn = partial(cti_rcm_prompt_fn, is_direct_answer=False)
+            metrics = [cti_rcm_metrics]
+            generation_size = 512
+            stop_sequence = []
+        elif name == "cti_bench:cti-rcm":
+            prompt_fn = cti_rcm_prompt_fn
+            metrics = [cti_rcm_metrics]
+            generation_size = 100
+            stop_sequence = ["\n"]
+        else:
+            raise ValueError(f"Unknown task name '{name}' for CTI-Bench evaluation task.")
+        super().__init__(
+            name=name,
+            hf_subset=hf_subset,
+            prompt_function=prompt_fn,
+            hf_repo="AI4Sec/cti-bench",
+            metrics=metrics,
+            hf_avail_splits=["test"],
+            evaluation_splits=["test"],
+            few_shots_split=None,
+            few_shots_select=None,
+            generation_size=generation_size,
+            stop_sequence=stop_sequence,
+        )
+
+
+class SECUREEvalTask(LightevalTaskConfig):
+    """Configuration for SECURE evaluation tasks."""
+
+    def __init__(self, name: str, hf_subset: str, log_prob: bool = True):
+
+        if hf_subset in ["MAET", "CWET"]:
+            prompt_fn = secure_mcq_prompt_fn
+
+        elif hf_subset in ["KCV", "VOOD"]:
+            prompt_fn = secure_bool_prompt_fn
+        else:
+            raise ValueError(f"Unknown subset '{hf_subset}' for SECURE evaluation task.")
+
+        super().__init__(
+            name=name,
+            hf_subset=hf_subset,
+            prompt_function=prompt_fn,
+            hf_repo="RISys-Lab/SECURE_Benchmark",
+            metrics=[Metrics.loglikelihood_acc] if log_prob else ([
+                Metrics.exact_match,
+            ] + ([regex_mcq_metrics] if hf_subset in ["MAET", "CWET"] else [])),
+            hf_avail_splits=["val", "test"],
+            evaluation_splits=["test"],
+            few_shots_split="val",
+            few_shots_select="sequential",
+            generation_size=-1 if log_prob else 100,
+            stop_sequence= None if log_prob else ["\n"],
+        )
+
+
+class SecBenchEvalTask(LightevalTaskConfig):
+    """Configuration for SecBench evaluation tasks."""
+
+    def __init__(self, name: str, hf_subset: str, log_prob: bool = True):
+        super().__init__(
+            name=name,
+            hf_subset=hf_subset,
+            prompt_function=secbench_mcq_prompt_fn,
+            hf_repo="RISys-Lab/SecBench",
+            metrics=[Metrics.loglikelihood_acc] if log_prob else [
+                Metrics.exact_match,
+                regex_mcq_metrics
+            ],
+            hf_avail_splits=["val", "test"],
+            evaluation_splits=["test"],
+            few_shots_split="val",
+            few_shots_select="sequential",
+            generation_size=-1 if log_prob else 100,
+            stop_sequence= None if log_prob else ["\n"],
+        )
+
+
+class SecEvalMCQATask(LightevalTaskConfig):
+    """Configuration for SecEval MCQA task."""
+
+    def __init__(self, name: str = "seceval:mcqa"):
+        
+        if name == "seceval:mcqa":
+            prompt_fn = seceval_prompt_fn
+        elif name == "seceval:mcqa_0s":
+            prompt_fn = partial(seceval_prompt_fn, is_few_shot=False)
+        else:
+            raise ValueError(f"Unknown task name '{name}' for SecEval MCQA evaluation task.")
+
+        super().__init__(
+            name=name,
+            hf_subset="default",
+            prompt_function=prompt_fn,
+            hf_repo="RISys-Lab/seceval",
+            metrics=[Metrics.exact_match],  # Fixed: was 'metric'
+            hf_avail_splits=["train"],
+            evaluation_splits=["train"],
+            few_shots_split=None,
+            few_shots_select=None,
+            generation_size=512,
+            stop_sequence=["\n"]
+        )
+
+
 class RedSageMCQTask(LightevalTaskConfig):
     """
     Configuration for a single cybersecurity evaluation task subset.
@@ -937,6 +900,63 @@ class RedSageMCQTask(LightevalTaskConfig):
             stop_sequence=None if "_em" not in name else ["\n"],  # Not applicable for non-generative tasks
         )
 
+
+# ============ Task Lists ============
+
+# 1. CyberMetrics
+CYBERMETRICS_TASKS = [
+    CyberMetricEvalTask(name="cybermetrics:80", hf_subset="cyberMetric_80"),
+    CyberMetricEvalTask(name="cybermetrics:500", hf_subset="cyberMetric_500"),
+    CyberMetricEvalTask(name="cybermetrics:2000", hf_subset="cyberMetric_2000"),
+    CyberMetricEvalTask(name="cybermetrics:10000", hf_subset="cyberMetric_10000"),
+    CyberMetricEvalTask(name="cybermetrics:80_em", hf_subset="cyberMetric_80", log_prob=False),
+    CyberMetricEvalTask(name="cybermetrics:500_em", hf_subset="cyberMetric_500", log_prob=False),
+    CyberMetricEvalTask(name="cybermetrics:2000_em", hf_subset="cyberMetric_2000", log_prob=False),
+    CyberMetricEvalTask(name="cybermetrics:10000_em", hf_subset="cyberMetric_10000", log_prob=False),
+]
+
+# 2. CTI-Bench
+CTIBENCH_TASKS = [
+    CustomCTIBenchEvalTask(name="cti_bench:cti-mcq_ori", hf_subset="cti-mcq"),
+    CustomCTIBenchEvalTask(name="cti_bench:cti-mcq_em", hf_subset="cti-mcq"),
+    CustomCTIBenchEvalTask(name="cti_bench:cti-mcq", hf_subset="cti-mcq"),
+    CustomCTIBenchEvalTask(name="cti_bench:cti-rcm_ori", hf_subset="cti-rcm"),
+    CustomCTIBenchEvalTask(name="cti_bench:cti-rcm", hf_subset="cti-rcm"),
+]
+
+# 3. MMLU Computer Security
+mmlu_computer_security_direct = LightevalTaskConfig(
+    name="mmlu:cs_security",
+    prompt_function=mmlu_helm_direct,
+    hf_repo="lighteval/mmlu",
+    hf_subset="computer_security",
+    hf_avail_splits=["auxiliary_train", "test", "validation", "dev"],
+    evaluation_splits=["test"],
+    few_shots_split="dev",
+    few_shots_select=None,
+    generation_size=5,
+    metrics=[Metrics.exact_match],
+    stop_sequence=["\n"],
+    version=0,
+)
+
+# 4. SECURE
+SECURE_TASKS = [
+    SECUREEvalTask(name="secure:maet_em", hf_subset="MAET", log_prob=False),
+    SECUREEvalTask(name="secure:cwet_em", hf_subset="CWET", log_prob=False),
+    SECUREEvalTask(name="secure:kcv_em", hf_subset="KCV", log_prob=False),
+]
+
+# 5. SecBench
+SECBENCH_TASKS = [
+    SecBenchEvalTask(name="secbench:mcq-en", hf_subset="MCQs_English"),
+    SecBenchEvalTask(name="secbench:mcq-en_em", hf_subset="MCQs_English", log_prob=False),
+]
+
+# 6. SecEval
+SECEVAL_TABLE = [SecEvalMCQATask(), SecEvalMCQATask(name="seceval:mcqa_0s")]
+
+# 7. RedSage
 REDSAGE_MCQ_SUBSETS_5K =  [
     "cybersecurity_knowledge_generals",
     "cybersecurity_knowledge_frameworks",
@@ -953,7 +973,6 @@ REDSAGE_MCQ_SUBSETS = [
     "cybersecurity_tools_cli",
     "cybersecurity_tools_kali",
 ]
-
 
 REDSAGE_MCQ_TASKS = []
 for subset in REDSAGE_MCQ_SUBSETS:
@@ -1012,59 +1031,6 @@ for subset in REDSAGE_MCQ_SUBSETS_5K:
         )
     )
 
-
-
-
-def mmlu_helm_direct(line, task_name: str = None):
-    subject = line["subject"]
-    instruction = f"The following are multiple choice questions (with answers) about {subject.replace('_', ' ')}. Answer with the option letter from the given choices directly."
-    query = f"{instruction}\n\nQuestion: {line['question']}"
-    query += "".join([f"\n{key}. {choice}" for key, choice in zip(ENGLISH_LETTER_INDICES, line["choices"])])
-    query += "\nAnswer:"
-
-    gold_ix = ENGLISH_LETTER_INDICES.index(line["answer"]) if isinstance(line["answer"], str) else line["answer"]
-
-    return Doc(
-        task_name=task_name,
-        query=query,
-        choices=[" A", " B", " C", " D"],
-        gold_index=gold_ix,
-        instruction=instruction,
-    )
-
-
-mmlu_computer_security_direct = LightevalTaskConfig(
-    name="mmlu:cs_security",
-    prompt_function=mmlu_helm_direct,
-    hf_repo="lighteval/mmlu",
-    hf_subset="computer_security",
-    hf_avail_splits=["auxiliary_train", "test", "validation", "dev"],
-    evaluation_splits=["test"],
-    few_shots_split="dev",
-    few_shots_select=None,
-    generation_size=5,
-    metrics=[Metrics.exact_match],
-    stop_sequence=["\n"],
-    version=0,
-)
-
-SECURE_TASKS = [
-    SECUREEvalTask(name="secure:maet_em", hf_subset="MAET", log_prob=False),
-    SECUREEvalTask(name="secure:cwet_em", hf_subset="CWET", log_prob=False),
-    SECUREEvalTask(name="secure:kcv_em", hf_subset="KCV", log_prob=False),
-]
-
-SECBENCH_TASKS = [
-    SecBenchEvalTask(name="secbench:mcq-en", hf_subset="MCQs_English"),
-    SecBenchEvalTask(name="secbench:mcq-en_em", hf_subset="MCQs_English", log_prob=False),
-    # SecBenchEvalTask(name="secbench:mcq-cn", hf_subset="MCQs_Chinese"),
-    # SecBenchEvalTask(name="secbench:mcq-cn_em", hf_subset="MCQs_Chinese", log_prob=False),
-]
-
-# SecEval tasks
-SECEVAL_TABLE = [SecEvalMCQATask(), SecEvalMCQATask(name="seceval:mcqa_0s")]
-
-
-# TASKS_TABLE = CYBERMETRICS_TASKS + [mmlu_computer_security_direct] + CTIBENCH_TASKS
+# ============ Main Task Table ============
 
 TASKS_TABLE = CYBERMETRICS_TASKS + [mmlu_computer_security_direct] + CTIBENCH_TASKS + SECURE_TASKS + SECBENCH_TASKS + SECEVAL_TABLE + REDSAGE_MCQ_TASKS
