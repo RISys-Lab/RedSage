@@ -973,8 +973,6 @@ REDSAGE_MCQ_SUBSETS = [
     "cybersecurity_knowledge_frameworks",
     "cybersecurity_skills",
     "cybersecurity_tools",
-    "cybersecurity_tools_cli",
-    "cybersecurity_tools_kali",
 ]
 
 REDSAGE_MCQ_TASKS = []
