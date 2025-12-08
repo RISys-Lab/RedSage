@@ -339,7 +339,10 @@ cti_rcm_metrics = SampleLevelMetric(
     corpus_level_fn=np.mean,
 )
 
-extend_enum(Metrics, "regex_mcq_acc", regex_mcq_metrics)
+try:
+    extend_enum(Metrics, "regex_mcq_acc", regex_mcq_metrics)
+except TypeError:
+    pass  # Metric already registered
 
 
 # ============ Prompt Functions ============

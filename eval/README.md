@@ -42,39 +42,40 @@ You can run evaluations using the `lighteval` CLI. Use the `--custom-tasks` argu
 ```bash
 lighteval vllm "model_name=Qwen/Qwen2.5-7B-Instruct" \
     --custom-tasks eval/cybersecurity_benchmarks.py \
-    --tasks "lighteval|mmlu:cs_security|0|0"
+    --tasks "lighteval|mmlu:cs_security|0"
 ```
 
 ### Available Tasks
 
-The following tasks are defined in `eval/cybersecurity_benchmarks.py`:
+The following tasks are defined in `eval/cybersecurity_benchmarks.py`. 
+**(Note: For API endpoints, use the `_em` / exact match versions which support generative evaluation)**:
 
 #### CyberMetrics
-- `lighteval|cybermetrics:80|0|0`
-- `lighteval|cybermetrics:500|0|0`
-- `lighteval|cybermetrics:2000|0|0`
-- `lighteval|cybermetrics:10000|0|0`
+- `lighteval|cybermetrics:80|0`
+- `lighteval|cybermetrics:500|0`
+- `lighteval|cybermetrics:2000|0`
+- `lighteval|cybermetrics:10000|0`
 (Add `_em` suffix for Exact Match version, e.g., `cybermetrics:80_em`)
 
 #### CTI-Bench
-- `lighteval|cti_bench:cti-mcq|0|0`
-- `lighteval|cti_bench:cti-rcm|0|0`
+- `lighteval|cti_bench:cti-mcq|0`
+- `lighteval|cti_bench:cti-rcm|0`
 (Variants: `_ori`, `_em`)
 
 #### MMLU Computer Security
-- `lighteval|mmlu:cs_security|0|0` (Uses custom "Answer directly" prompt)
+- `lighteval|mmlu:cs_security|0` (Uses custom "Answer directly" prompt)
 
 #### SECURE
-- `lighteval|secure:maet_em|0|0`
-- `lighteval|secure:cwet_em|0|0`
-- `lighteval|secure:kcv_em|0|0`
+- `lighteval|secure:maet_em|0`
+- `lighteval|secure:cwet_em|0`
+- `lighteval|secure:kcv_em|0`
 
 #### SecBench
-- `lighteval|secbench:mcq-en|0|0`
+- `lighteval|secbench:mcq-en|0`
 (Add `_em` suffix for Exact Match version)
 
 #### SecEval
-- `lighteval|seceval:mcqa|0|0`
+- `lighteval|seceval:mcqa|0`
 
 #### RedSage MCQ
 Tasks are available for various subsets:
@@ -85,7 +86,7 @@ Tasks are available for various subsets:
 - `cybersecurity_tools_cli`
 - `cybersecurity_tools_kali`
 
-Format: `lighteval|redsage_mcq:{subset}|0|0`
+Format: `lighteval|redsage_mcq:{subset}|0`
 Variants:
 - `redsage_mcq:{subset}` (Default)
 - `redsage_mcq_ctx:{subset}` (With Context)
@@ -98,6 +99,6 @@ Variants:
 ```bash
 lighteval vllm "model_name=Qwen/Qwen2.5-7B-Instruct" \
     --custom-tasks eval/cybersecurity_benchmarks.py \
-    --tasks "lighteval|mmlu:cs_security|0|0,lighteval|cybermetrics:80|0|0" \
+    --tasks "lighteval|mmlu:cs_security|0,lighteval|cybermetrics:80|0" \
     --output-dir results/
 ```
