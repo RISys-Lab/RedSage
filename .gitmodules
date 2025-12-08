@@ -1,3 +1,4 @@
 [submodule "eval/lighteval"]
 	path = eval/lighteval
 	url = https://github.com/naufalso/lighteval.git
+	branch = cybersecurity_benchmark
