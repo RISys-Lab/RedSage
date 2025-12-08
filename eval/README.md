@@ -40,7 +40,7 @@ You can run evaluations using the `lighteval` CLI. Use the `--custom-tasks` argu
 ### Basic Usage
 
 ```bash
-lighteval vllm "model_name=Qwen/Qwen2.5-7B-Instruct" \
+lighteval vllm "model_name=RISys-Lab/RedSage-Qwen3-8B-Ins" \
     --custom-tasks eval/cybersecurity_benchmarks.py \
     --tasks "lighteval|mmlu:cs_security|0"
 ```
@@ -97,7 +97,7 @@ Variants:
 ## Example: Running Multiple Tasks
 
 ```bash
-lighteval vllm "model_name=Qwen/Qwen2.5-7B-Instruct" \
+lighteval vllm "model_name=RISys-Lab/RedSage-Qwen3-8B-Ins" \
     --custom-tasks eval/cybersecurity_benchmarks.py \
     --tasks "lighteval|mmlu:cs_security|0,lighteval|cybermetrics:80|0" \
     --output-dir results/
