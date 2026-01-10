@@ -56,8 +56,8 @@ We are releasing RedSage sequentially in four phases. Track progress here (we’
 
 ### 4) Evaluation
 - [ ] Release **RedSage-Bench** data (license + README)
-- [ ] Release lighteval task implementations for related **Cybersecurity Benchmarks**
-- [ ] Provide `eval/run_lighteval.py` and example command lines
+- [x] Release lighteval task implementations for related **Cybersecurity Benchmarks**
+- [x] Provide `eval/run_lighteval.py` and example command lines
 - [ ] Publish baseline results (RedSage variants + common 8B baselines)
 - [ ] Add results table/plots to **Docs**
 
