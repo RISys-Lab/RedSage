@@ -328,3 +328,70 @@ Make sure to use the correct task format:
 2. **Adjust batch size**: While default is 1, some tasks may benefit from larger batches
 3. **Multi-GPU**: Use `--vllm-tensor-parallel-size` for very large models
 4. **Test first**: Use `--max-samples 10` to test your setup before full evaluation
+
+## Results and Output
+
+### Output Structure
+
+Results are saved to the specified output directory (default: `results/`):
+
+```
+results/
+├── details/           # Detailed per-sample predictions
+├── results.json       # Aggregate metrics
+└── config.json        # Evaluation configuration
+```
+
+### Example Results
+
+**results.json** contains aggregate metrics for each task:
+
+```json
+{
+  "lighteval|cybermetrics:80|0": {
+    "acc": 0.75,
+    "stderr": 0.048
+  },
+  "lighteval|mmlu:cs_security|0": {
+    "exact_match": 0.68,
+    "stderr": 0.052
+  }
+}
+```
+
+### Interpreting Metrics
+
+Different tasks use different evaluation metrics:
+
+- **Loglikelihood tasks** (`cybermetrics:80`, `redsage_mcq:*`, etc.): Report **accuracy** based on comparing log probabilities of answer choices
+- **Generative tasks** (`*_em` variants): Report **exact_match** and custom metrics (e.g., `regex_mcq_acc` for MCQ extraction)
+- **CTI-RCM**: Uses custom **RCMAcc** metric for CWE ID extraction
+- **CTI-VSP**: Uses **MAD** (Mean Absolute Difference) and normalized similarity for CVSS vector comparison
+
+### Example: Complete Evaluation Run
+
+```bash
+# Run a comprehensive evaluation
+python eval/run_lighteval.py vllm \
+    --model RISys-Lab/RedSage-8B-DPO \
+    --tasks cybermetrics:500,mmlu:cs_security,secbench:mcq-en,secure:maet_em \
+    --output-dir results/comprehensive_eval
+
+# Expected output:
+# Processing task: lighteval|cybermetrics:500|0
+# Processing task: lighteval|mmlu:cs_security|0
+# Processing task: lighteval|secbench:mcq-en|0
+# Processing task: lighteval|secure:maet_em|0
+# 
+# Results saved to: results/comprehensive_eval/
+```
+
+## Contributing
+
+Found an issue or want to add a new benchmark? Please open an issue or submit a pull request!
+
+When adding new benchmarks:
+1. Add task definition to `cybersecurity_benchmarks.py`
+2. Update the task list in `run_lighteval.py`
+3. Document the task in this README
+4. Include example usage
