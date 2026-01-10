@@ -184,19 +184,30 @@ Licenses and source notes are documented in `data/README.md`.
 
 ## Evaluation
 
-See **`eval/README.md`** for:
+See **`eval/README.md`** for detailed instructions on:
 
 * **RedSage-Bench:** 30K MCQs + 240 open-ended items with an LLM-as-judge rubric.
 * **Cybersecurity Benchmarks:** **CTI-Bench**, **CyberMetric**, **SecBench**, **SecEval**, **SECURE**, **MMLU-CSec**.
 
+### Quick Start
 
-<!-- Run: -->
+```bash
+# List all available tasks
+python eval/run_lighteval.py --list-tasks
 
-<!-- ```bash
-python eval/run_lighteval.py \
-  --model your-org/RedSage-8B-DPO \
-  --tasks redsage_bench_mcq,redsage_bench_open,secbench_en,cybermetric_500
-``` -->
+# Run a single benchmark
+python eval/run_lighteval.py vllm \
+  --model RISys-Lab/RedSage-8B-DPO \
+  --tasks cybermetrics:500
+
+# Run multiple benchmarks
+python eval/run_lighteval.py vllm \
+  --model RISys-Lab/RedSage-8B-DPO \
+  --tasks cybermetrics:500,mmlu:cs_security,secbench:mcq-en \
+  --output-dir results/my_eval
+```
+
+For more examples and advanced usage, see **`eval/README.md`**.
 
 ---
 
