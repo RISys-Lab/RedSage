@@ -58,30 +58,13 @@ def get_available_tasks():
             "redsage_mcq:cybersecurity_knowledge_generals",
             "redsage_mcq:cybersecurity_knowledge_frameworks",
             "redsage_mcq:cybersecurity_skills",
-            "redsage_mcq:cybersecurity_tools",
-            "redsage_mcq_ctx:cybersecurity_knowledge_generals",
-            "redsage_mcq_ctx:cybersecurity_knowledge_frameworks",
-            "redsage_mcq_ctx:cybersecurity_skills",
-            "redsage_mcq_ctx:cybersecurity_tools",
+            "redsage_mcq:cybersecurity_tools_cli",
+            "redsage_mcq:cybersecurity_tools_kali",
             "redsage_mcq_em:cybersecurity_knowledge_generals",
             "redsage_mcq_em:cybersecurity_knowledge_frameworks",
             "redsage_mcq_em:cybersecurity_skills",
-            "redsage_mcq_em:cybersecurity_tools",
-            "redsage_mcq_5k:cybersecurity_knowledge_generals",
-            "redsage_mcq_5k:cybersecurity_knowledge_frameworks",
-            "redsage_mcq_5k:cybersecurity_skills",
-            "redsage_mcq_5k:cybersecurity_tools_cli",
-            "redsage_mcq_5k:cybersecurity_tools_kali",
-            "redsage_mcq_5k_ctx:cybersecurity_knowledge_generals",
-            "redsage_mcq_5k_ctx:cybersecurity_knowledge_frameworks",
-            "redsage_mcq_5k_ctx:cybersecurity_skills",
-            "redsage_mcq_5k_ctx:cybersecurity_tools_cli",
-            "redsage_mcq_5k_ctx:cybersecurity_tools_kali",
-            "redsage_mcq_5k_em:cybersecurity_knowledge_generals",
-            "redsage_mcq_5k_em:cybersecurity_knowledge_frameworks",
-            "redsage_mcq_5k_em:cybersecurity_skills",
-            "redsage_mcq_5k_em:cybersecurity_tools_cli",
-            "redsage_mcq_5k_em:cybersecurity_tools_kali",
+            "redsage_mcq_em:cybersecurity_tools_cli",
+            "redsage_mcq_em:cybersecurity_tools_kali",
         ],
     }
 
@@ -139,9 +122,9 @@ Examples:
     parser.add_argument(
         "backend",
         nargs="?",
-        default="transformers",
-        choices=["transformers", "vllm"],
-        help="Backend to use for inference (default: transformers)",
+        default="accelerate",
+        choices=["accelerate", "vllm"],
+        help="Backend to use for inference (default: accelerate)",
     )
     
     parser.add_argument(
@@ -257,13 +240,13 @@ Examples:
             model_args.append(f"max_model_len={args.vllm_max_model_len}")
         cmd.append(",".join(model_args))
     else:
-        cmd.append(f"pretrained={args.model}")
+        cmd.append(f"model_name={args.model}")
     
     # Add common arguments
     cmd.extend([
         "--custom-tasks", str(custom_tasks_path),
-        "--tasks", tasks_str,
         "--output-dir", args.output_dir,
+        tasks_str
     ])
     
     if args.num_fewshot > 0:

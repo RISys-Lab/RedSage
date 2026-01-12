@@ -44,6 +44,17 @@ Install additional dependencies required for the benchmarks:
 pip install cvss aenum
 ```
 
+### 4. Install vLLM (Optional)
+
+Use vLLM for faster and more efficient inferenceL
+
+```bash
+pip install vllm --torch-backend=auto
+```
+
+Follow the [official installation tutorial](https://docs.vllm.ai/en/latest/getting_started/installation/)
+
+
 ## Quick Start
 
 We provide a convenient wrapper script `run_lighteval.py` for easy evaluation:
@@ -52,7 +63,7 @@ We provide a convenient wrapper script `run_lighteval.py` for easy evaluation:
 # List all available tasks
 python eval/run_lighteval.py --list-tasks
 
-# Run a single task with Transformers backend
+# Run a single task with Transformers Accelerate backend (default)
 python eval/run_lighteval.py --model RISys-Lab/RedSage-8B-Ins --tasks cybermetrics:80
 
 # Run with vLLM backend (recommended for faster inference)
@@ -133,11 +144,11 @@ Cyber Threat Intelligence benchmark:
 
 ### SECURE
 
-Security Understanding and Reasoning Evaluation:
+Security Extraction, Understanding & Reasoning Evaluation:
 
-- `secure:maet_em` - Malware Analysis and Ethical Testing
-- `secure:cwet_em` - Common Weakness Enumeration Testing
-- `secure:kcv_em` - Knowledge and Comprehension Validation
+- `secure:maet_em` - Mitre Attack Extraction Task
+- `secure:cwet_em` - Common Weakness Extraction Task
+- `secure:kcv_em` - Knowledge test on Common Vulnerabilities
 
 ### SecBench
 
@@ -157,34 +168,20 @@ Security evaluation with multi-answer questions:
 
 RedSage's internal cybersecurity benchmark covering multiple domains:
 
-**Full dataset (test_10k split):**
-- `redsage_mcq:cybersecurity_knowledge_generals`
-- `redsage_mcq:cybersecurity_knowledge_frameworks`
-- `redsage_mcq:cybersecurity_skills`
-- `redsage_mcq:cybersecurity_tools`
-
-**With context variants (includes content field):**
-- `redsage_mcq_ctx:cybersecurity_knowledge_generals`
-- `redsage_mcq_ctx:cybersecurity_knowledge_frameworks`
-- `redsage_mcq_ctx:cybersecurity_skills`
-- `redsage_mcq_ctx:cybersecurity_tools`
+**Loglikelihood evalution**
+- `redsage_mcq:cybersecurity_knowledge_generals` - 5K cybersecurity general knowledge MCQ
+- `redsage_mcq:cybersecurity_knowledge_frameworks` - 5K cybersecurity general frameworks MCQ
+- `redsage_mcq:cybersecurity_skills` - 10K cybersecurity offensive skill
+- `redsage_mcq:cybersecurity_tools_cli` -  5K cybersecurity general CLI MCQ
+- `redsage_mcq:cybersecurity_tools_kali`  -  5K cybersecurity Kali CLI MCQ
 
 **Exact match variants (generative evaluation):**
 - `redsage_mcq_em:cybersecurity_knowledge_generals`
-- `redsage_mcq_em:cybersecurity_knowledge_frameworks`
-- `redsage_mcq_em:cybersecurity_skills`
-- `redsage_mcq_em:cybersecurity_tools`
-
-**5K subset (test_5k split):**
-- `redsage_mcq_5k:cybersecurity_knowledge_generals`
-- `redsage_mcq_5k:cybersecurity_knowledge_frameworks`
-- `redsage_mcq_5k:cybersecurity_skills`
-- `redsage_mcq_5k:cybersecurity_tools_cli`
-- `redsage_mcq_5k:cybersecurity_tools_kali`
-
-And corresponding `_ctx` and `_em` variants for the 5K split.
-
-**Note**: For `redsage_mcq` tasks, ensure you have access to the dataset `naufalso/RedSage_MCQ_Qwen_Verified` on Hugging Face.
+- `redsage_mcq_em:cybersecurity_knowledge_generals` - 5K cybersecurity general knowledge MCQ
+- `redsage_mcq_em:cybersecurity_knowledge_frameworks` - 5K cybersecurity general frameworks MCQ
+- `redsage_mcq_em:cybersecurity_skills` - 10K cybersecurity offensive skill
+- `redsage_mcq_em:cybersecurity_tools_cli` -  5K cybersecurity general CLI MCQ
+- `redsage_mcq_em:cybersecurity_tools_kali`  -  5K cybersecurity Kali CLI MCQ
 
 ## Advanced Usage
 
@@ -309,12 +306,6 @@ If you run out of GPU memory:
        --vllm-max-model-len 4096
    ```
 
-### Dataset Access Issues
-
-For RedSage MCQ tasks, ensure you have access to the dataset:
-
-1. Log in to Hugging Face: `huggingface-cli login`
-2. Request access to `naufalso/RedSage_MCQ_Qwen_Verified` if needed
 
 ### Task Name Errors
 

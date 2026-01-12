@@ -885,7 +885,7 @@ class RedSageMCQTask(LightevalTaskConfig):
         name: str,
         hf_subset: str,
         include_context: bool= False,
-        evaluation_split: str = "test_10k"
+        evaluation_split: str = "test"
     ):
         super().__init__(
             name=name,
@@ -893,9 +893,9 @@ class RedSageMCQTask(LightevalTaskConfig):
             prompt_function=lambda line, task_name: cybersec_prompt_fn(line, task_name, include_context=include_context),
             # IMPORTANT: Replace with your actual Hugging Face Hub dataset repository ID
             # For example: "my_organization/my_cybersecurity_dataset"
-            hf_repo="naufalso/RedSage_MCQ_Qwen_Verified",
+            hf_repo="RISys-Lab/Benchmarks_CyberSec_RedSageMCQ",
             metrics=[Metrics.loglikelihood_acc] if "_em" not in name else [Metrics.exact_match, regex_mcq_metrics],  # Using standard accuracy for multiple-choice questions
-            hf_avail_splits=["test", "val", "test_10k", "test_5k", "test_1k"],  # As per your dataset card
+            hf_avail_splits=["test"],  # As per your dataset card
             evaluation_splits=[evaluation_split],  # As per your dataset card
             few_shots_split="val",  # Use validation split for few-shot examples
             few_shots_select="sequential",  # Sequential selection strategy
@@ -960,7 +960,7 @@ SECBENCH_TASKS = [
 SECEVAL_TABLE = [SecEvalMCQATask(), SecEvalMCQATask(name="seceval:mcqa_0s")]
 
 # 7. RedSage
-REDSAGE_MCQ_SUBSETS_5K =  [
+REDSAGE_MCQ_SUBSETS =  [
     "cybersecurity_knowledge_generals",
     "cybersecurity_knowledge_frameworks",
     "cybersecurity_skills",
@@ -968,29 +968,15 @@ REDSAGE_MCQ_SUBSETS_5K =  [
     "cybersecurity_tools_kali",
 ]
 
-REDSAGE_MCQ_SUBSETS = [
-    "cybersecurity_knowledge_generals",
-    "cybersecurity_knowledge_frameworks",
-    "cybersecurity_skills",
-    "cybersecurity_tools",
-]
-
 REDSAGE_MCQ_TASKS = []
 for subset in REDSAGE_MCQ_SUBSETS:
-    # Version without context (default)
+    # Version loglikelihood (default)
     REDSAGE_MCQ_TASKS.append(
         RedSageMCQTask(
             name=f"redsage_mcq:{subset}",
             hf_subset=subset,
             include_context=False,
-        )
-    )
-    # Version with context
-    REDSAGE_MCQ_TASKS.append(
-        RedSageMCQTask(
-            name=f"redsage_mcq_ctx:{subset}",
-            hf_subset=subset,
-            include_context=True,
+            evaluation_split="test"
         )
     )
     # Version exact match (no context)
@@ -999,36 +985,7 @@ for subset in REDSAGE_MCQ_SUBSETS:
             name=f"redsage_mcq_em:{subset}",
             hf_subset=subset,
             include_context=False,
-        )
-    )
-
-for subset in REDSAGE_MCQ_SUBSETS_5K:
-    # Version without context (default)
-    REDSAGE_MCQ_TASKS.append(
-        RedSageMCQTask(
-            name=f"redsage_mcq_5k:{subset}",
-            hf_subset=subset,
-            include_context=False,
-            evaluation_split="test_5k"
-        )
-    )
-    # Version with context
-    REDSAGE_MCQ_TASKS.append(
-        RedSageMCQTask(
-            name=f"redsage_mcq_5k_ctx:{subset}",
-            hf_subset=subset,
-            include_context=True,
-            evaluation_split="test_5k"
-        )
-    )
-
-    # Version exact match (no context)
-    REDSAGE_MCQ_TASKS.append(
-        RedSageMCQTask(
-            name=f"redsage_mcq_5k_em:{subset}",
-            hf_subset=subset,
-            include_context=False,
-            evaluation_split="test_5k"
+            evaluation_split="test"
         )
     )
 
