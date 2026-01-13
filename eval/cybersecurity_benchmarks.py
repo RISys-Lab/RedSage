@@ -35,6 +35,8 @@ from lighteval.metrics.utils.metric_utils import SampleLevelMetric
 from lighteval.models.model_output import ModelResponse
 from lighteval.tasks.lighteval_task import LightevalTaskConfig
 from lighteval.tasks.requests import Doc, SamplingMethod
+from lighteval.metrics.metrics_sample import ExactMatches
+
 
 logger = logging.getLogger(__name__)
 
@@ -339,8 +341,18 @@ cti_rcm_metrics = SampleLevelMetric(
     corpus_level_fn=np.mean,
 )
 
+prefix_em_metrics = SampleLevelMetric(
+        metric_name="pem",
+        sample_level_fn=ExactMatches(strip_strings=True, type_exact_match="prefix"),
+        category=SamplingMethod.GENERATIVE,
+        corpus_level_fn=np.mean,
+        higher_is_better=True,
+)
+
 try:
     extend_enum(Metrics, "regex_mcq_acc", regex_mcq_metrics)
+    extend_enum(Metrics, "cti_rcm_acc", cti_rcm_metrics)
+    extend_enum(Metrics, "prefix_exact_match", prefix_em_metrics)
 except TypeError:
     pass  # Metric already registered
 
@@ -730,6 +742,7 @@ class CyberMetricEvalTask(LightevalTaskConfig):
         else:
             metrics = [
                 Metrics.exact_match,
+                prefix_em_metrics,
                 regex_mcq_metrics
             ]
             generation_size = 100
@@ -739,10 +752,10 @@ class CyberMetricEvalTask(LightevalTaskConfig):
             name=name,
             hf_subset=hf_subset,
             prompt_function=cybermetrics_mcq_prompt_fn,
-            hf_repo="RISys-Lab/cybermetrics_mcqa",
+            hf_repo="RISys-Lab/Benchmarks_CyberSec_CyberMetrics",
             metrics=metrics,
-            hf_avail_splits=["train"],
-            evaluation_splits=["train"],
+            hf_avail_splits=["test"],
+            evaluation_splits=["test"],
             few_shots_split=None,
             few_shots_select=None,
             generation_size=generation_size,
@@ -754,12 +767,12 @@ class CustomCTIBenchEvalTask(LightevalTaskConfig):
     """Configuration for CTI-Bench evaluation tasks."""
 
     def __init__(self, name: str, hf_subset: str):
-        if name == "cti_bench:cti-mcq_ori":
+        if name == "cti_bench:cti-mcq_em":
             prompt_fn = partial(cti_mcq_prompt_fn, is_direct_answer=False)
             metrics = [regex_mcq_metrics]
             generation_size = 1024
             stop_sequence = []
-        elif name == "cti_bench:cti-mcq_em":
+        elif name == "cti_bench:cti-mcq_em_direct":
             prompt_fn = cti_mcq_prompt_fn
             metrics = [regex_mcq_metrics]
             generation_size = 100
@@ -769,8 +782,13 @@ class CustomCTIBenchEvalTask(LightevalTaskConfig):
             metrics = [Metrics.loglikelihood_acc]
             generation_size = -1
             stop_sequence = None
-        elif name == "cti_bench:cti-rcm_ori":
+        elif name == "cti_bench:cti-rcm_em":
             prompt_fn = partial(cti_rcm_prompt_fn, is_direct_answer=False)
+            metrics = [cti_rcm_metrics]
+            generation_size = 512
+            stop_sequence = []
+        elif name == "cti_bench:cti-rcm_em_direct":
+            prompt_fn = partial(cti_rcm_prompt_fn, is_direct_answer=True)
             metrics = [cti_rcm_metrics]
             generation_size = 512
             stop_sequence = []
@@ -785,9 +803,9 @@ class CustomCTIBenchEvalTask(LightevalTaskConfig):
             name=name,
             hf_subset=hf_subset,
             prompt_function=prompt_fn,
-            hf_repo="AI4Sec/cti-bench",
+            hf_repo="RISys-Lab/Benchmarks_CyberSec_CTI-Bench",
             metrics=metrics,
-            hf_avail_splits=["test"],
+            hf_avail_splits=["validation", "test"],
             evaluation_splits=["test"],
             few_shots_split=None,
             few_shots_select=None,
@@ -813,9 +831,10 @@ class SECUREEvalTask(LightevalTaskConfig):
             name=name,
             hf_subset=hf_subset,
             prompt_function=prompt_fn,
-            hf_repo="RISys-Lab/SECURE_Benchmark",
+            hf_repo="RISys-Lab/Benchmarks_CyberSec_SECURE",
             metrics=[Metrics.loglikelihood_acc] if log_prob else ([
                 Metrics.exact_match,
+                prefix_em_metrics,
             ] + ([regex_mcq_metrics] if hf_subset in ["MAET", "CWET"] else [])),
             hf_avail_splits=["val", "test"],
             evaluation_splits=["test"],
@@ -834,9 +853,10 @@ class SecBenchEvalTask(LightevalTaskConfig):
             name=name,
             hf_subset=hf_subset,
             prompt_function=secbench_mcq_prompt_fn,
-            hf_repo="RISys-Lab/SecBench",
+            hf_repo="RISys-Lab/Benchmarks_CyberSec_SecBench",
             metrics=[Metrics.loglikelihood_acc] if log_prob else [
                 Metrics.exact_match,
+                prefix_em_metrics,
                 regex_mcq_metrics
             ],
             hf_avail_splits=["val", "test"],
@@ -854,9 +874,9 @@ class SecEvalMCQATask(LightevalTaskConfig):
     def __init__(self, name: str = "seceval:mcqa"):
         
         if name == "seceval:mcqa":
-            prompt_fn = seceval_prompt_fn
-        elif name == "seceval:mcqa_0s":
             prompt_fn = partial(seceval_prompt_fn, is_few_shot=False)
+        elif name == "seceval:mcqa_5s":
+            prompt_fn = partial(seceval_prompt_fn, is_few_shot=True)
         else:
             raise ValueError(f"Unknown task name '{name}' for SecEval MCQA evaluation task.")
 
@@ -864,12 +884,12 @@ class SecEvalMCQATask(LightevalTaskConfig):
             name=name,
             hf_subset="default",
             prompt_function=prompt_fn,
-            hf_repo="RISys-Lab/seceval",
-            metrics=[Metrics.exact_match],  # Fixed: was 'metric'
-            hf_avail_splits=["train"],
-            evaluation_splits=["train"],
-            few_shots_split=None,
-            few_shots_select=None,
+            hf_repo="RISys-Lab/Benchmarks_CyberSec_SecEval",
+            metrics=[Metrics.exact_match, prefix_em_metrics],  # Fixed: was 'metric'
+            hf_avail_splits=["val", "test"],
+            evaluation_splits=["test"],
+            few_shots_split="val",
+            few_shots_select="sequential",
             generation_size=512,
             stop_sequence=["\n"]
         )
@@ -885,7 +905,7 @@ class RedSageMCQTask(LightevalTaskConfig):
         name: str,
         hf_subset: str,
         include_context: bool= False,
-        evaluation_split: str = "test_10k"
+        evaluation_split: str = "test"
     ):
         super().__init__(
             name=name,
@@ -893,9 +913,9 @@ class RedSageMCQTask(LightevalTaskConfig):
             prompt_function=lambda line, task_name: cybersec_prompt_fn(line, task_name, include_context=include_context),
             # IMPORTANT: Replace with your actual Hugging Face Hub dataset repository ID
             # For example: "my_organization/my_cybersecurity_dataset"
-            hf_repo="naufalso/RedSage_MCQ_Qwen_Verified",
-            metrics=[Metrics.loglikelihood_acc] if "_em" not in name else [Metrics.exact_match, regex_mcq_metrics],  # Using standard accuracy for multiple-choice questions
-            hf_avail_splits=["test", "val", "test_10k", "test_5k", "test_1k"],  # As per your dataset card
+            hf_repo="RISys-Lab/Benchmarks_CyberSec_RedSageMCQ",
+            metrics=[Metrics.loglikelihood_acc] if "_em" not in name else [Metrics.exact_match, prefix_em_metrics, regex_mcq_metrics],  # Using standard accuracy for multiple-choice questions
+            hf_avail_splits=["test"],  # As per your dataset card
             evaluation_splits=[evaluation_split],  # As per your dataset card
             few_shots_split="val",  # Use validation split for few-shot examples
             few_shots_select="sequential",  # Sequential selection strategy
@@ -920,11 +940,12 @@ CYBERMETRICS_TASKS = [
 
 # 2. CTI-Bench
 CTIBENCH_TASKS = [
-    CustomCTIBenchEvalTask(name="cti_bench:cti-mcq_ori", hf_subset="cti-mcq"),
     CustomCTIBenchEvalTask(name="cti_bench:cti-mcq_em", hf_subset="cti-mcq"),
+    CustomCTIBenchEvalTask(name="cti_bench:cti-mcq_em_direct", hf_subset="cti-mcq"),
     CustomCTIBenchEvalTask(name="cti_bench:cti-mcq", hf_subset="cti-mcq"),
-    CustomCTIBenchEvalTask(name="cti_bench:cti-rcm_ori", hf_subset="cti-rcm"),
     CustomCTIBenchEvalTask(name="cti_bench:cti-rcm", hf_subset="cti-rcm"),
+    CustomCTIBenchEvalTask(name="cti_bench:cti-rcm_em", hf_subset="cti-rcm"),
+    CustomCTIBenchEvalTask(name="cti_bench:cti-rcm_em_direct", hf_subset="cti-rcm"),
 ]
 
 # 3. MMLU Computer Security
@@ -938,13 +959,15 @@ mmlu_computer_security_direct = LightevalTaskConfig(
     few_shots_split="dev",
     few_shots_select=None,
     generation_size=5,
-    metrics=[Metrics.exact_match],
+    metrics=[Metrics.exact_match, prefix_em_metrics, regex_mcq_metrics],
     stop_sequence=["\n"],
     version=0,
 )
 
 # 4. SECURE
 SECURE_TASKS = [
+    SECUREEvalTask(name="secure:maet", hf_subset="MAET", log_prob=True),
+    SECUREEvalTask(name="secure:cwet", hf_subset="CWET", log_prob=True),
     SECUREEvalTask(name="secure:maet_em", hf_subset="MAET", log_prob=False),
     SECUREEvalTask(name="secure:cwet_em", hf_subset="CWET", log_prob=False),
     SECUREEvalTask(name="secure:kcv_em", hf_subset="KCV", log_prob=False),
@@ -957,10 +980,10 @@ SECBENCH_TASKS = [
 ]
 
 # 6. SecEval
-SECEVAL_TABLE = [SecEvalMCQATask(), SecEvalMCQATask(name="seceval:mcqa_0s")]
+SECEVAL_TABLE = [SecEvalMCQATask(), SecEvalMCQATask(name="seceval:mcqa_5s")]
 
 # 7. RedSage
-REDSAGE_MCQ_SUBSETS_5K =  [
+REDSAGE_MCQ_SUBSETS =  [
     "cybersecurity_knowledge_generals",
     "cybersecurity_knowledge_frameworks",
     "cybersecurity_skills",
@@ -968,29 +991,15 @@ REDSAGE_MCQ_SUBSETS_5K =  [
     "cybersecurity_tools_kali",
 ]
 
-REDSAGE_MCQ_SUBSETS = [
-    "cybersecurity_knowledge_generals",
-    "cybersecurity_knowledge_frameworks",
-    "cybersecurity_skills",
-    "cybersecurity_tools",
-]
-
 REDSAGE_MCQ_TASKS = []
 for subset in REDSAGE_MCQ_SUBSETS:
-    # Version without context (default)
+    # Version loglikelihood (default)
     REDSAGE_MCQ_TASKS.append(
         RedSageMCQTask(
             name=f"redsage_mcq:{subset}",
             hf_subset=subset,
             include_context=False,
-        )
-    )
-    # Version with context
-    REDSAGE_MCQ_TASKS.append(
-        RedSageMCQTask(
-            name=f"redsage_mcq_ctx:{subset}",
-            hf_subset=subset,
-            include_context=True,
+            evaluation_split="test"
         )
     )
     # Version exact match (no context)
@@ -999,36 +1008,7 @@ for subset in REDSAGE_MCQ_SUBSETS:
             name=f"redsage_mcq_em:{subset}",
             hf_subset=subset,
             include_context=False,
-        )
-    )
-
-for subset in REDSAGE_MCQ_SUBSETS_5K:
-    # Version without context (default)
-    REDSAGE_MCQ_TASKS.append(
-        RedSageMCQTask(
-            name=f"redsage_mcq_5k:{subset}",
-            hf_subset=subset,
-            include_context=False,
-            evaluation_split="test_5k"
-        )
-    )
-    # Version with context
-    REDSAGE_MCQ_TASKS.append(
-        RedSageMCQTask(
-            name=f"redsage_mcq_5k_ctx:{subset}",
-            hf_subset=subset,
-            include_context=True,
-            evaluation_split="test_5k"
-        )
-    )
-
-    # Version exact match (no context)
-    REDSAGE_MCQ_TASKS.append(
-        RedSageMCQTask(
-            name=f"redsage_mcq_5k_em:{subset}",
-            hf_subset=subset,
-            include_context=False,
-            evaluation_split="test_5k"
+            evaluation_split="test"
         )
     )
 
