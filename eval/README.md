@@ -46,7 +46,7 @@ pip install cvss aenum
 
 ### 4. Install vLLM (Optional)
 
-Use vLLM for faster and more efficient inferenceL
+Use vLLM for faster and more efficient inference:
 
 ```bash
 pip install vllm --torch-backend=auto
@@ -171,7 +171,7 @@ Security evaluation with multi-answer questions:
 
 RedSage's internal cybersecurity benchmark covering multiple domains:
 
-**Loglikelihood evalution**
+**Loglikelihood evaluation**
 - `redsage_mcq:cybersecurity_knowledge_generals` - 5K cybersecurity general knowledge MCQ
 - `redsage_mcq:cybersecurity_knowledge_frameworks` - 5K cybersecurity general frameworks MCQ
 - `redsage_mcq:cybersecurity_skills` - 10K cybersecurity offensive skill

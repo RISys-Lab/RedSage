@@ -61,7 +61,7 @@ We are releasing RedSage sequentially in four phases. Track progress here (we’
 - [ ] Release **RedSage-CFW** on Hugging Face (datasets + card)
 - [ ] Release **RedSage-Seed** on Hugging Face (datasets + card)
 - [ ] Release **RedSage-Conv** on Hugging Face (datasets + card)
-- [ ] Release cybersecurity-filetering code.
+- [ ] Release cybersecurity-filtering code.
 - [ ] Release agentic data augmentation code for generating multi-turn conversation from seed.
 - [ ] Add `data/README.md` (provenance, dedup, cleaning, TOS/licensing)
 
