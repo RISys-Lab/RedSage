@@ -11,16 +11,20 @@ Usage:
 For more options:
     python eval/run_lighteval.py --help
 """
-
+import os
 import argparse
 import sys
 import subprocess
 from pathlib import Path
 
-
 def get_available_tasks():
     """Return a dictionary of available task categories and their tasks."""
     return {
+        "CuratedTasks": [
+            "tasks/redsage_mcqs.txt",
+            "tasks/related_benchmarks_ins.txt",
+            "tasks/related_benchmarks_base.txt"
+        ],
         "CyberMetrics": [
             "cybermetrics:80",
             "cybermetrics:500",
@@ -33,15 +37,18 @@ def get_available_tasks():
         ],
         "CTI-Bench": [
             "cti_bench:cti-mcq",
-            "cti_bench:cti-mcq_ori",
             "cti_bench:cti-mcq_em",
+            "cti_bench:cti-mcq_em_direct",
             "cti_bench:cti-rcm",
-            "cti_bench:cti-rcm_ori",
+            "cti_bench:cti-rcm_em",
+            "cti_bench:cti-rcm_em_direct",
         ],
         "MMLU": [
             "mmlu:cs_security",
         ],
         "SECURE": [
+            "secure:maet",
+            "secure:cwet",
             "secure:maet_em",
             "secure:cwet_em",
             "secure:kcv_em",
@@ -52,7 +59,6 @@ def get_available_tasks():
         ],
         "SecEval": [
             "seceval:mcqa",
-            "seceval:mcqa_0s",
         ],
         "RedSage-MCQ": [
             "redsage_mcq:cybersecurity_knowledge_generals",
@@ -75,8 +81,12 @@ def list_tasks():
     print("\n=== Available Evaluation Tasks ===\n")
     for category, task_list in tasks.items():
         print(f"{category}:")
-        for task in task_list:
-            print(f"  - lighteval|{task}|0")
+        if category == "CuratedTasks":
+            for task_file in task_list:
+                print(f"  -  {task_file}")
+        else:
+            for task in task_list:
+                print(f"  - lighteval|{task}|n")
         print()
 
 
@@ -211,15 +221,22 @@ Examples:
     
     # Format tasks for lighteval
     task_list = []
-    for task in args.tasks.split(","):
-        task = task.strip()
-        if task:
-            # Add lighteval| prefix and |0 suffix if not already present
-            if not task.startswith("lighteval|"):
-                task = f"lighteval|{task}"
-            if not task.endswith("|0"):
-                task = f"{task}|0"
-            task_list.append(task)
+    if args.tasks.strip().startswith("tasks/"):
+        current_dir = os.path.dirname(os.path.abspath(__file__))
+        task_file_path = os.path.join(current_dir, args.tasks.strip())
+        if not os.path.isfile(task_file_path):
+            print(f"Error: Task file not found at {task_file_path}", file=sys.stderr)
+            return 1
+        # If a curated task file is provided
+        task_list.append(task_file_path)
+    else:
+        for task in args.tasks.split(","):
+            task = task.strip()
+            if task:
+                # Append few-shot suffix if not already present. Check |<number> at end
+                if not task.split("|")[-1].isdigit():
+                    task = f"{task}|{args.num_fewshot}"
+                task_list.append(task)
     
     tasks_str = ",".join(task_list)
     
@@ -248,9 +265,6 @@ Examples:
         "--output-dir", args.output_dir,
         tasks_str
     ])
-    
-    if args.num_fewshot > 0:
-        cmd.extend(["--num-fewshot-seeds", str(args.num_fewshot)])
     
     if args.max_samples:
         cmd.extend(["--max-samples", str(args.max_samples)])
