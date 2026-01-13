@@ -259,20 +259,26 @@ For full control, use `lighteval` directly:
 # Single task with vLLM
 lighteval vllm "model_name=RISys-Lab/RedSage-Qwen3-8B-Ins,gpu_memory_utilisation=0.9" \
     --custom-tasks eval/cybersecurity_benchmarks.py \
-    --tasks "lighteval|cybermetrics:80|0" \
-    --output-dir results/
+    --output-dir results/ \
+    "cybermetrics:80|0"
 
 # Multiple tasks
 lighteval vllm "model_name=RISys-Lab/RedSage-Qwen3-8B-Ins" \
     --custom-tasks eval/cybersecurity_benchmarks.py \
-    --tasks "lighteval|mmlu:cs_security|0,lighteval|cybermetrics:80|0,lighteval|secbench:mcq-en|0" \
-    --output-dir results/
+    --output-dir results/ \
+    "mmlu:cs_security|0,cybermetrics:80|0,secbench:mcq-en|0"
+
+# Curated tasks
+lighteval vllm "model_name=RISys-Lab/RedSage-Qwen3-8B-Ins" \
+    --custom-tasks eval/cybersecurity_benchmarks.py \
+    --output-dir results/ \
+    "eval/tasks/redsage_mcqs.txt"
 
 # With Accelerate backend
 lighteval accelerate "model_name=RISys-Lab/RedSage-Qwen3-8B-Ins" \
     --custom-tasks eval/cybersecurity_benchmarks.py \
-    --tasks "lighteval|cybermetrics:80|0" \
-    --output-dir results/
+    --output-dir results/ \
+    "lighteval|cybermetrics:80|0"
 ```
 
 ## Troubleshooting
