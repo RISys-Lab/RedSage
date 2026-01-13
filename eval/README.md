@@ -63,7 +63,7 @@ We provide a convenient wrapper script `run_lighteval.py` for easy evaluation:
 # List all available tasks
 python eval/run_lighteval.py --list-tasks
 
-# Run a single task with Transformers Accelerate backend (default)
+# Run a single task with Accelerate backend (default)
 python eval/run_lighteval.py --model RISys-Lab/RedSage-8B-Ins --tasks cybermetrics:80
 
 # Run with vLLM backend (recommended for faster inference)
@@ -87,7 +87,7 @@ python eval/run_lighteval.py [backend] --model MODEL_NAME --tasks TASK_LIST [OPT
 ```
 
 **Arguments:**
-- `backend`: Choose `transformers` (default) or `vllm`
+- `backend`: Choose `accelerate` (default) or `vllm`
 - `--model`: Model name or path (e.g., `RISys-Lab/RedSage-8B-Ins`)
 - `--tasks`: Comma-separated list of tasks (e.g., `cybermetrics:80,mmlu:cs_security`)
 - `--output-dir`: Directory to save results (default: `results`)
@@ -133,10 +133,11 @@ Cybersecurity knowledge benchmark with different dataset sizes:
 Cyber Threat Intelligence benchmark:
 
 - `cti_bench:cti-mcq` - Multiple choice questions (loglikelihood)
-- `cti_bench:cti-mcq_ori` - MCQ with original prompt (generative, full response)
-- `cti_bench:cti-mcq_em` - MCQ with exact match (generative, single line)
+- `cti_bench:cti-mcq_em` - MCQ with extracted letter scoring (generative, full response)
+- `cti_bench:cti-mcq_em_direct` - MCQ with extracted letter scoring (generative, direct answer line)
 - `cti_bench:cti-rcm` - Root Cause Mapping (generative, single line)
-- `cti_bench:cti-rcm_ori` - RCM with original prompt (generative, full response)
+- `cti_bench:cti-rcm_em` - RCM with extracted CWE scoring (generative, full response)
+- `cti_bench:cti-rcm_em_direct` - RCM with extracted CWE scoring (generative, direct answer line)
 
 ### MMLU Computer Security
 
@@ -146,9 +147,11 @@ Cyber Threat Intelligence benchmark:
 
 Security Extraction, Understanding & Reasoning Evaluation:
 
-- `secure:maet_em` - Mitre Attack Extraction Task
-- `secure:cwet_em` - Common Weakness Extraction Task
-- `secure:kcv_em` - Knowledge test on Common Vulnerabilities
+- `secure:maet` - Mitre Attack Extraction Task (loglikelihood)
+- `secure:cwet` - Common Weakness Extraction Task (loglikelihood)
+- `secure:maet_em` - Mitre Attack Extraction Task (generative/exact match)
+- `secure:cwet_em` - Common Weakness Extraction Task (generative/exact match)
+- `secure:kcv_em` - Knowledge test on Common Vulnerabilities (generative/exact match)
 
 ### SecBench
 
@@ -176,12 +179,19 @@ RedSage's internal cybersecurity benchmark covering multiple domains:
 - `redsage_mcq:cybersecurity_tools_kali`  -  5K cybersecurity Kali CLI MCQ
 
 **Exact match variants (generative evaluation):**
-- `redsage_mcq_em:cybersecurity_knowledge_generals`
 - `redsage_mcq_em:cybersecurity_knowledge_generals` - 5K cybersecurity general knowledge MCQ
 - `redsage_mcq_em:cybersecurity_knowledge_frameworks` - 5K cybersecurity general frameworks MCQ
 - `redsage_mcq_em:cybersecurity_skills` - 10K cybersecurity offensive skill
 - `redsage_mcq_em:cybersecurity_tools_cli` -  5K cybersecurity general CLI MCQ
 - `redsage_mcq_em:cybersecurity_tools_kali`  -  5K cybersecurity Kali CLI MCQ
+ 
+### Curated Task Lists
+
+Text files that group multiple tasks for convenience (pass one of these to `--tasks`):
+
+- `tasks/redsage_mcqs.txt` - RedSage MCQ subsets
+- `tasks/related_benchmarks_ins.txt` - Instruction-tuned related benchmarks
+- `tasks/related_benchmarks_base.txt` - Base-model related benchmarks
 
 ## Advanced Usage
 
@@ -258,8 +268,8 @@ lighteval vllm "model_name=RISys-Lab/RedSage-8B-Ins" \
     --tasks "lighteval|mmlu:cs_security|0,lighteval|cybermetrics:80|0,lighteval|secbench:mcq-en|0" \
     --output-dir results/
 
-# With Transformers backend
-lighteval transformers "pretrained=RISys-Lab/RedSage-8B-Ins" \
+# With Accelerate backend
+lighteval accelerate "model_name=RISys-Lab/RedSage-8B-Ins" \
     --custom-tasks eval/cybersecurity_benchmarks.py \
     --tasks "lighteval|cybermetrics:80|0" \
     --output-dir results/
