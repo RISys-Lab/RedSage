@@ -6,7 +6,7 @@ This script provides a convenient wrapper around lighteval for running
 cybersecurity benchmark evaluations on RedSage models.
 
 Usage:
-    python eval/run_lighteval.py --model RISys-Lab/RedSage-8B-Ins --tasks cybermetrics:80
+    python eval/run_lighteval.py --model RISys-Lab/RedSage-Qwen3-8B-Ins --tasks cybermetrics:80
 
 For more options:
     python eval/run_lighteval.py --help
@@ -59,6 +59,7 @@ def get_available_tasks():
         ],
         "SecEval": [
             "seceval:mcqa",
+            "seceval:mcqa_5s",
         ],
         "RedSage-MCQ": [
             "redsage_mcq:cybersecurity_knowledge_generals",
@@ -97,26 +98,29 @@ def main():
         epilog="""
 Examples:
   # Run a single task
-  python eval/run_lighteval.py --model RISys-Lab/RedSage-8B-Ins --tasks cybermetrics:80
+  python eval/run_lighteval.py --model RISys-Lab/RedSage-Qwen3-8B-Ins --tasks cybermetrics:80
   
   # Run multiple tasks
-  python eval/run_lighteval.py --model RISys-Lab/RedSage-8B-Ins \\
+  python eval/run_lighteval.py --model RISys-Lab/RedSage-Qwen3-8B-Ins \\
       --tasks cybermetrics:80,mmlu:cs_security,secbench:mcq-en
+
+  # Run a curated RedSage MCQs task
+  python eval/run_lighteval.py --model RISys-Lab/RedSage-Qwen3-8B-Ins --tasks tasks/redsage_mcqs.txt
   
   # Run with specific output directory
-  python eval/run_lighteval.py --model RISys-Lab/RedSage-8B-Ins \\
+  python eval/run_lighteval.py --model RISys-Lab/RedSage-Qwen3-8B-Ins \\
       --tasks cybermetrics:500 --output-dir results/my_eval
   
   # List all available tasks
   python eval/run_lighteval.py --list-tasks
   
   # Run with vLLM backend (for faster inference)
-  python eval/run_lighteval.py vllm --model RISys-Lab/RedSage-8B-Ins \\
+  python eval/run_lighteval.py vllm --model RISys-Lab/RedSage-Qwen3-8B-Ins \\
       --tasks cybermetrics:80
 
   # Run with custom vLLM parameters
   python eval/run_lighteval.py vllm \\
-      --model RISys-Lab/RedSage-8B-Ins \\
+      --model RISys-Lab/RedSage-Qwen3-8B-Ins \\
       --tasks cybermetrics:80 \\
       --vllm-gpu-memory-utilization 0.8 \\
       --vllm-max-model-len 8192
@@ -140,7 +144,7 @@ Examples:
     parser.add_argument(
         "--model",
         type=str,
-        help="Model name or path (e.g., RISys-Lab/RedSage-8B-Ins)",
+        help="Model name or path (e.g., RISys-Lab/RedSage-Qwen3-8B-Ins)",
     )
     
     parser.add_argument(
@@ -157,13 +161,6 @@ Examples:
     )
     
     parser.add_argument(
-        "--batch-size",
-        type=int,
-        default=1,
-        help="Batch size for evaluation (default: 1)",
-    )
-    
-    parser.add_argument(
         "--max-samples",
         type=int,
         help="Maximum number of samples to evaluate per task (for testing)",
@@ -174,6 +171,12 @@ Examples:
         type=int,
         default=0,
         help="Number of few-shot examples (default: 0)",
+    )
+
+    parser.add_argument(
+        "--save-details",
+        action="store_true",
+        help="Save detailed evaluation results",
     )
     
     # vLLM-specific arguments
@@ -258,6 +261,9 @@ Examples:
         cmd.append(",".join(model_args))
     else:
         cmd.append(f"model_name={args.model}")
+
+    if args.save_details:
+        cmd.append("--save-details")
     
     # Add common arguments
     cmd.extend([

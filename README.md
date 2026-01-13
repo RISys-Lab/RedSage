@@ -1,69 +1,88 @@
-# RedSage
+# RedSage: A Cybersecurity Generalist LLM
+
+**Official repository for the RedSage paper (ICLR 2026 - Under Review).**
+
+Authors: Naufal Suryanto, Muzammal Naseer, Pengfei Li, Syed Talal Wasim, Jinhui Yi, Juergen Gall, Paolo Ceravolo, Ernesto Damiani
 
 <p align="center">
-  <img src="assets/redsage_logo.png" width="360" alt="RedSage"/>
-</p>
-
-<p align="center">
-  🔧 <a href="#">Hugging Face</a>&nbsp;&nbsp;|&nbsp;&nbsp;🧪 <a href="#">Model Collection</a>&nbsp;&nbsp;|&nbsp;&nbsp;📘 <a href="#">Docs</a>&nbsp;&nbsp;|&nbsp;&nbsp;📑 <a href="#">Paper</a>&nbsp;&nbsp;|&nbsp;&nbsp;🗞️ <a href="#">Blog</a>
+  🔧 <a href="https://huggingface.co/RISys-Lab">Hugging Face</a>&nbsp;&nbsp;|&nbsp;&nbsp;🧪 <a href="https://huggingface.co/collections/RISys-Lab/redsage-models">Model Collection</a>&nbsp;&nbsp;|&nbsp;&nbsp;📘 <a href="https://huggingface.co/collections/RISys-Lab/redsage-datasets">Data Collection</a>&nbsp;&nbsp;|&nbsp;&nbsp;📊 <a href="https://huggingface.co/collections/RISys-Lab/redsage-benchmarks">Benchmark Collection</a>&nbsp;&nbsp;|&nbsp;&nbsp;📑 <a href="https://openreview.net/forum?id=W4FAenIrQ2">Paper</a>&nbsp;&nbsp;|&nbsp;&nbsp;🗞️ <a href="#">Blog (Comming Soon)</a>
 </p>
 
 <!-- 🖥️ <a href="https://huggingface.co/spaces/your-org/RedSage-Demo">Demo</a>&nbsp;&nbsp; -->
 
-**RedSage** is a cybersecurity generalist LLM suite for diverse cybersecurity tasks. It combines domain-aware continual pretraining, agentic augmentation for SFT, and a dedicated benchmark (RedSage-Bench).
+**TL;DR:** **RedSage** is a cybersecurity generalist LLM suite for diverse cybersecurity tasks. It combines domain-aware continual pretraining, agentic augmentation for SFT, and a dedicated benchmark (RedSage-Bench).
 
 > Visit our HF org or the collection above for all checkpoints (names start with `RedSage-`).
 
 ---
 
-## News
+## 📑 Table of Contents
+- [News](#-news)
+- [Introduction](#-introduction)
+- [Run RedSage (Local)](#-run-redsage-local)
+- [Deploy RedSage (vLLM)](#-deploy-redsage-vllm)
+- [Build with RedSage](#-build-with-redsage)
+- [Data](#-data)
+- [Evaluation](#-evaluation)
+- [Results Summary](#-results-summary)
+- [Responsible Use & License](#-responsible-use--license)
+- [Contributing](#-contributing)
+- [Citation](#-citation)
+
+## 📰 News
+- 2026-01-13: Completed the lighteval implementation for RedSage-MCQ and related Cybersecurity benchmarks.
 - 2025-10-14: Update the README.md
-<!-- - 2025-08-12: Public release of **RedSage-8B-Base**, **-Ins**, **-DPO**.  
+<!-- - 2025-08-12: Public release of **RedSage-Qwen3-8B-Base**, **-Ins**, **-DPO**.  
 - 2025-08-05: RedSage-Bench task definitions added to `eval/lighteval_tasks/`.  
 - 2025-07-28: Agentic augmentation pipeline open-sourced in `data/augment/`. -->
 
----
-
-
-## Release Plan & Checklist
+### Release Plan & Checklist
 
 We are releasing RedSage sequentially in four phases. Track progress here (we’ll keep this list updated).
 
-### 1) Model & Inference
-- [ ] Publish `RedSage-8B-Base` on Hugging Face (weights + model card)
-- [ ] Publish `RedSage-8B-Ins` on Hugging Face (weights + model card)
-- [ ] Publish `RedSage-8B-DPO` on Hugging Face (weights + model card)
-- [ ] Publish `RedSage-8B-CFW` on Hugging Face (weights + model card)
-- [ ] Publish `RedSage-8B-Seed` on Hugging Face (weights + model card)
+<details>
+  <summary><b>View checklist</b></summary>
+
+#### 1) Model & Inference
+- [ ] Publish `RedSage-Qwen3-8B-Base` on Hugging Face (weights + model card)
+- [x] Publish `RedSage-Qwen3-8B-Ins` on Hugging Face (weights + model card)
+- [x] Publish `RedSage-Qwen3-8B-DPO` on Hugging Face (weights + model card)
+- [x] Publish `RedSage-Qwen3-8B-CFW` on Hugging Face (weights + model card)
+- [ ] Publish `RedSage-Qwen3-8B-Seed` on Hugging Face (weights + model card)
 - [ ] Provide `inference/hf_chat.py` (Transformers chat example)
 - [ ] Provide `inference/vllm_demo.py` (simple client)
 - [ ] Add **vLLM** serving guide in `docs/deploy/vllm.md`
 - [ ] (Optional) Release quantized variants (GGUF/AWQ/GPTQ) & notes
 
-### 2) Data
-- [ ] Release **RedSage-Seed** subset (paths, schema, license notes)
-- [ ] Release **RedSage-Conv** (agentic dialogues) with validation schema
-- [ ] Release cybersecurity-filtered corpus metadata (CFW) + filters/code
+#### 2) Data
+- [ ] Release **RedSage-CFW** on Hugging Face (datasets + card)
+- [ ] Release **RedSage-Seed** on Hugging Face (datasets + card)
+- [ ] Release **RedSage-Conv** on Hugging Face (datasets + card)
+- [ ] Release cybersecurity-filetering code.
 - [ ] Release agentic data augmentation code for generating multi-turn conversation from seed.
 - [ ] Add `data/README.md` (provenance, dedup, cleaning, TOS/licensing)
 
-### 3) Training
+#### 3) Evaluation
+- [x] Release **RedSage-MCQ** data and lighteval implementation
+- [x] Release lighteval task implementations for related **Cybersecurity Benchmarks**
+- [x] Provide `eval/run_lighteval.py` and example command lines
+- [ ] Release **RedSage-OpenQA** data and lighteval implementation
+- [ ] Publish baseline results (RedSage variants + common 8B baselines)
+- [ ] Add results table/plots to **Docs**
+
+#### 4) Training
 - [ ] Add Axolotl **CPT** (continual pretraining) notes/configs in `training/configs/cpt/`
 - [ ] Add Axolotl **SFT** config(s) in `training/configs/sft/`
 - [ ] Add Axolotl **DPO** config(s) in `training/configs/dpo/`
 - [ ] Provide `scripts/train_*.sh` runners + `accelerate` tips
 - [ ] Document hardware requirements & expected throughput
 
-### 4) Evaluation
-- [ ] Release **RedSage-Bench** data (license + README)
-- [x] Release lighteval task implementations for related **Cybersecurity Benchmarks**
-- [x] Provide `eval/run_lighteval.py` and example command lines
-- [ ] Publish baseline results (RedSage variants + common 8B baselines)
-- [ ] Add results table/plots to **Docs**
+</details>
 
 ---
 
-## Introduction
+
+## 🤖 Introduction
 
 - **Focus:** Cybersecurity knowledge, skills, and tool use.  
 - **Training pipeline:** Continual pretraining on a cybersecurity-filtered corpus → instruction fine-tuning with agentically generated multi-turn dialogues → preference alignment.  
@@ -71,15 +90,15 @@ We are releasing RedSage sequentially in four phases. Track progress here (we’
 
 ### Model lineup (8B)
 
-- **RedSage-8B-Base**  
+- **RedSage-Qwen3-8B-Base** ([🤗 Model Card](https://huggingface.co/RISys-Lab/RedSage-Qwen3-8B-Base))  
   Continual-pretrained on cybersecurity-filtered data with a small general replay to reduce forgetting. Raw, strong domain knowledge; no chat alignment.  
   *Best for:* research baselines, downstream fine-tuning (SFT/DPO), adapters, and custom domain adaptation.
 
-- **RedSage-8B-Ins**  
+- **RedSage-Qwen3-8B-Ins** ([🤗 Model Card](https://huggingface.co/RISys-Lab/RedSage-Qwen3-8B-Ins))  
   `Base` + supervised fine-tuning on RedSage-Conv (agentic, multi-turn cyber dialogues) and a targeted general SFT mix. Helpful, step-by-step answers without preference tuning.  
   *Best for:* day-to-day cybersecurity assistant usage, explanations, playbook authoring, code/snippet help.
 
-- **RedSage-8B-DPO**  
+- **RedSage-Qwen3-8B-DPO** ([🤗 Model Card](https://huggingface.co/RISys-Lab/RedSage-Qwen3-8B-DPO))  
   `Ins` + preference alignment with DPO for more preference-aligned responses.  
   *Best for:* end-user chat, production-style assistants where tone/format consistency matters.
 
@@ -88,20 +107,20 @@ We are releasing RedSage sequentially in four phases. Track progress here (we’
 <details>
   <summary><b>Previous / Experimental Variants</b></summary>
 
-- **RedSage-8B-CFW** — CPT on cybersecurity-filtered web only (ablation).  
-- **RedSage-8B-Seed** — CPT on curated seed sources only (ablation).
+- **RedSage-Qwen3-8B-CFW** ([🤗 Model Card](https://huggingface.co/RISys-Lab/RedSage-Qwen3-8B-CFW)) — CPT on cybersecurity-filtered web only (ablation).  
+- **RedSage-Qwen3-8B-Seed** ([🤗 Model Card](https://huggingface.co/RISys-Lab/RedSage-Qwen3-8B-Seed)) — CPT on curated seed sources only (ablation).
 </details>
 
 ---
 
-## Run RedSage (Local)
+## 💻 Run RedSage (Local)
 
 ### 🤗 Transformers (Ins/DPO)
 ```python
 from transformers import AutoModelForCausalLM, AutoTokenizer
 import torch
 
-model_name = "RISys-Lab/RedSage-8B-Ins"
+model_name = "RISys-Lab/RedSage-Qwen3-8B-Ins"
 
 tok = AutoTokenizer.from_pretrained(model_name)
 model = AutoModelForCausalLM.from_pretrained(
@@ -123,7 +142,7 @@ print(tok.decode(out[0], skip_special_tokens=True))
 
 ---
 
-## Deploy RedSage (vLLM)
+## 🚀 Deploy RedSage (vLLM)
 
 RedSage is production-ready with **vLLM** for high-throughput, OpenAI-compatible serving.
 
@@ -131,7 +150,7 @@ RedSage is production-ready with **vLLM** for high-throughput, OpenAI-compatible
 
 ```bash
 pip install -U vllm
-vllm serve RISys-Lab/RedSage-8B-DPO --port 8000 --max-model-len 32768
+vllm serve RISys-Lab/RedSage-Qwen3-8B-DPO --port 8000 --max-model-len 32768
 # OpenAI-compatible API at http://localhost:8000/v1
 ```
 
@@ -141,7 +160,7 @@ vllm serve RISys-Lab/RedSage-8B-DPO --port 8000 --max-model-len 32768
 curl http://localhost:8000/v1/chat/completions \
   -H "Content-Type: application/json" \
   -d '{
-    "model": "RISys-Lab/RedSage-8B-DPO",
+    "model": "RISys-Lab/RedSage-Qwen3-8B-DPO",
     "messages": [
       {"role": "system", "content": "You are RedSage, a helpful cybersecurity assistant."},
       {"role": "user",   "content": "Explain AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H."}
@@ -159,7 +178,7 @@ curl http://localhost:8000/v1/chat/completions \
 
 ---
 
-## Build with RedSage
+## 🛠️ Build with RedSage
 
 ### Continued Pre-training, Fine-tuning, and Preference Optimization (Axolotl)
 
@@ -172,7 +191,7 @@ See **`training/README.md`** for:
 
 ---
 
-## Data
+## 📂 Data
 
 * **Cybersecurity-filtered corpus** with global dedup; includes a small general-domain replay to reduce forgetting.
 * **RedSage-Seed:** curated Knowledge / Skills / Tools sources.
@@ -182,7 +201,7 @@ Licenses and source notes are documented in `data/README.md`.
 
 ---
 
-## Evaluation
+## 🧪 Evaluation
 
 See **`eval/README.md`** for detailed instructions on:
 
@@ -197,14 +216,20 @@ python eval/run_lighteval.py --list-tasks
 
 # Run a single benchmark
 python eval/run_lighteval.py vllm \
-  --model RISys-Lab/RedSage-8B-DPO \
+  --model RISys-Lab/RedSage-Qwen3-8B-DPO \
   --tasks cybermetrics:500
 
 # Run multiple benchmarks
 python eval/run_lighteval.py vllm \
-  --model RISys-Lab/RedSage-8B-DPO \
+  --model RISys-Lab/RedSage-Qwen3-8B-DPO \
   --tasks cybermetrics:500,mmlu:cs_security,secbench:mcq-en \
   --output-dir results/my_eval
+
+# Run curated benchmarks (e.g, All RedSage-MCQs)
+python eval/run_lighteval.py vllm \
+  --model RISys-Lab/RedSage-Qwen3-8B-DPO \
+  --tasks tasks/redsage_mcqs.txt \
+  --output-dir results/redsage_mcq
 ```
 
 For more examples and advanced usage, see **`eval/README.md`**.
@@ -212,17 +237,13 @@ For more examples and advanced usage, see **`eval/README.md`**.
 ---
 
 
-## Results Summary
+## 📊 Results Summary
 
-* Detailed results, plots, and comparisons live in **Docs** and the **Blog**
-* Instruct/DPO variants improve over strong 8B baselines on cybersecurity tasks and remain competitive on general benchmarks.
-* CPT variants show complementary strengths between filtered-web and curated-seed stages.
-
-Full tables & plots: see **Docs**.
+TBD.
 
 ---
 
-## Responsible Use & License
+## ⚖️ Responsible Use & License
 
 This project contains offensive-security knowledge and is **released for research use only**. Apply appropriate safeguards before any operational deployment.
 
@@ -232,7 +253,7 @@ This project contains offensive-security knowledge and is **released for researc
 
 ---
 
-## Contributing
+## 🤝 Contributing
 
 We welcome issues and PRs! Please:
 
@@ -242,14 +263,16 @@ We welcome issues and PRs! Please:
 
 ---
 
-## Citation
+## 🧾 Citation
 
 ```bibtex
-@inproceedings{redsage2026,
-  title     = {RedSage: A Cybersecurity Generalist LLM},
-  author    = {Anonymous},
-  year      = {2026},
-  booktitle = {Proceedings}
+@inproceedings{anonymous2025redsage,
+  title={RedSage: A Cybersecurity Generalist {LLM}},
+  author={Anonymous},
+  booktitle={Submitted to The Fourteenth International Conference on Learning Representations},
+  year={2025},
+  url={https://openreview.net/forum?id=W4FAenIrQ2},
+  note={under review}
 }
 ```
 

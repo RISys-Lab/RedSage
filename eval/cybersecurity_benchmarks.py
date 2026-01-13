@@ -874,9 +874,9 @@ class SecEvalMCQATask(LightevalTaskConfig):
     def __init__(self, name: str = "seceval:mcqa"):
         
         if name == "seceval:mcqa":
-            prompt_fn = seceval_prompt_fn
-        elif name == "seceval:mcqa_0s":
             prompt_fn = partial(seceval_prompt_fn, is_few_shot=False)
+        elif name == "seceval:mcqa_5s":
+            prompt_fn = partial(seceval_prompt_fn, is_few_shot=True)
         else:
             raise ValueError(f"Unknown task name '{name}' for SecEval MCQA evaluation task.")
 
@@ -885,7 +885,7 @@ class SecEvalMCQATask(LightevalTaskConfig):
             hf_subset="default",
             prompt_function=prompt_fn,
             hf_repo="RISys-Lab/Benchmarks_CyberSec_SecEval",
-            metrics=[Metrics.exact_match],  # Fixed: was 'metric'
+            metrics=[Metrics.exact_match, prefix_em_metrics],  # Fixed: was 'metric'
             hf_avail_splits=["val", "test"],
             evaluation_splits=["test"],
             few_shots_split="val",
@@ -980,7 +980,7 @@ SECBENCH_TASKS = [
 ]
 
 # 6. SecEval
-SECEVAL_TABLE = [SecEvalMCQATask(), SecEvalMCQATask(name="seceval:mcqa_0s")]
+SECEVAL_TABLE = [SecEvalMCQATask(), SecEvalMCQATask(name="seceval:mcqa_5s")]
 
 # 7. RedSage
 REDSAGE_MCQ_SUBSETS =  [

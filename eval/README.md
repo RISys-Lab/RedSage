@@ -64,14 +64,14 @@ We provide a convenient wrapper script `run_lighteval.py` for easy evaluation:
 python eval/run_lighteval.py --list-tasks
 
 # Run a single task with Accelerate backend (default)
-python eval/run_lighteval.py --model RISys-Lab/RedSage-8B-Ins --tasks cybermetrics:80
+python eval/run_lighteval.py --model RISys-Lab/RedSage-Qwen3-8B-Ins --tasks cybermetrics:80
 
 # Run with vLLM backend (recommended for faster inference)
-python eval/run_lighteval.py vllm --model RISys-Lab/RedSage-8B-Ins --tasks cybermetrics:80
+python eval/run_lighteval.py vllm --model RISys-Lab/RedSage-Qwen3-8B-Ins --tasks cybermetrics:80
 
 # Run multiple tasks
 python eval/run_lighteval.py vllm \
-    --model RISys-Lab/RedSage-8B-Ins \
+    --model RISys-Lab/RedSage-Qwen3-8B-Ins \
     --tasks cybermetrics:80,mmlu:cs_security,secbench:mcq-en \
     --output-dir results/my_eval
 ```
@@ -88,7 +88,7 @@ python eval/run_lighteval.py [backend] --model MODEL_NAME --tasks TASK_LIST [OPT
 
 **Arguments:**
 - `backend`: Choose `accelerate` (default) or `vllm`
-- `--model`: Model name or path (e.g., `RISys-Lab/RedSage-8B-Ins`)
+- `--model`: Model name or path (e.g., `RISys-Lab/RedSage-Qwen3-8B-Ins`)
 - `--tasks`: Comma-separated list of tasks (e.g., `cybermetrics:80,mmlu:cs_security`)
 - `--output-dir`: Directory to save results (default: `results`)
 - `--num-fewshot`: Number of few-shot examples (default: 0)
@@ -104,7 +104,7 @@ python eval/run_lighteval.py [backend] --model MODEL_NAME --tasks TASK_LIST [OPT
 You can also use the `lighteval` CLI directly with the `--custom-tasks` argument:
 
 ```bash
-lighteval vllm "model_name=RISys-Lab/RedSage-8B-Ins" \
+lighteval vllm "model_name=RISys-Lab/RedSage-Qwen3-8B-Ins" \
     --custom-tasks eval/cybersecurity_benchmarks.py \
     --tasks "lighteval|mmlu:cs_security|0"
 ```
@@ -164,8 +164,8 @@ Security benchmark with multiple-choice questions:
 
 Security evaluation with multi-answer questions:
 
-- `seceval:mcqa` - Multi-choice questions with 5-shot examples
-- `seceval:mcqa_0s` - Multi-choice questions with 0-shot
+- `seceval:mcqa` - Multi-choice questions.
+- `seceval:mcqa_5s` - Multi-choice questions with default 5-shot sample.
 
 ### RedSage MCQ
 
@@ -189,31 +189,31 @@ RedSage's internal cybersecurity benchmark covering multiple domains:
 
 Text files that group multiple tasks for convenience (pass one of these to `--tasks`):
 
-- `tasks/redsage_mcqs.txt` - RedSage MCQ subsets
-- `tasks/related_benchmarks_ins.txt` - Instruction-tuned related benchmarks
-- `tasks/related_benchmarks_base.txt` - Base-model related benchmarks
+- `tasks/redsage_mcqs.txt` - RedSage MCQ subsets (0-shot sample)
+- `tasks/related_benchmarks_ins.txt` - Instruction-tuned related cybersecurity benchmarks (0-shot sample)
+- `tasks/related_benchmarks_base.txt` - Base-model related cybersecurity benchmarks (5-shot sample)
 
 ## Advanced Usage
 
 ### Running a Complete Benchmark Suite
 
 ```bash
-# Run all CyberMetrics benchmarks
+# Run CyberMetrics 500 subset
 python eval/run_lighteval.py vllm \
-    --model RISys-Lab/RedSage-8B-DPO \
-    --tasks cybermetrics:80,cybermetrics:500,cybermetrics:2000,cybermetrics:10000 \
+    --model RISys-Lab/RedSage-Qwen3-8B-DPO \
+    --tasks cybermetrics:500 \
     --output-dir results/cybermetrics_full
 
-# Run all CTI-Bench tasks
+# Run CTI-Bench MCQ and RCM tasks
 python eval/run_lighteval.py vllm \
-    --model RISys-Lab/RedSage-8B-DPO \
+    --model RISys-Lab/RedSage-Qwen3-8B-DPO \
     --tasks cti_bench:cti-mcq,cti_bench:cti-rcm \
     --output-dir results/cti_bench_full
 
-# Run core RedSage benchmarks
+# Run all RedSage-MCQ benchmarks
 python eval/run_lighteval.py vllm \
-    --model RISys-Lab/RedSage-8B-DPO \
-    --tasks redsage_mcq:cybersecurity_knowledge_generals,redsage_mcq:cybersecurity_knowledge_frameworks,redsage_mcq:cybersecurity_skills,redsage_mcq:cybersecurity_tools \
+    --model RISys-Lab/RedSage-Qwen3-8B-DPO \
+    --tasks tasks/redsage_mcqs.txt \
     --output-dir results/redsage_full
 ```
 
@@ -222,7 +222,7 @@ python eval/run_lighteval.py vllm \
 ```bash
 # Test with only 10 samples per task
 python eval/run_lighteval.py vllm \
-    --model RISys-Lab/RedSage-8B-Ins \
+    --model RISys-Lab/RedSage-Qwen3-8B-Ins \
     --tasks cybermetrics:80 \
     --max-samples 10 \
     --output-dir results/test
@@ -233,7 +233,7 @@ python eval/run_lighteval.py vllm \
 ```bash
 # Use 2 GPUs with tensor parallelism
 python eval/run_lighteval.py vllm \
-    --model RISys-Lab/RedSage-8B-DPO \
+    --model RISys-Lab/RedSage-Qwen3-8B-DPO \
     --tasks cybermetrics:2000 \
     --vllm-tensor-parallel-size 2 \
     --output-dir results/multi_gpu
@@ -244,7 +244,7 @@ python eval/run_lighteval.py vllm \
 ```bash
 # Configure vLLM with specific parameters
 python eval/run_lighteval.py vllm \
-    --model RISys-Lab/RedSage-8B-Ins \
+    --model RISys-Lab/RedSage-Qwen3-8B-Ins \
     --tasks cybermetrics:500 \
     --vllm-gpu-memory-utilization 0.8 \
     --vllm-max-model-len 16384 \
@@ -257,19 +257,19 @@ For full control, use `lighteval` directly:
 
 ```bash
 # Single task with vLLM
-lighteval vllm "model_name=RISys-Lab/RedSage-8B-Ins,gpu_memory_utilisation=0.9" \
+lighteval vllm "model_name=RISys-Lab/RedSage-Qwen3-8B-Ins,gpu_memory_utilisation=0.9" \
     --custom-tasks eval/cybersecurity_benchmarks.py \
     --tasks "lighteval|cybermetrics:80|0" \
     --output-dir results/
 
 # Multiple tasks
-lighteval vllm "model_name=RISys-Lab/RedSage-8B-Ins" \
+lighteval vllm "model_name=RISys-Lab/RedSage-Qwen3-8B-Ins" \
     --custom-tasks eval/cybersecurity_benchmarks.py \
     --tasks "lighteval|mmlu:cs_security|0,lighteval|cybermetrics:80|0,lighteval|secbench:mcq-en|0" \
     --output-dir results/
 
 # With Accelerate backend
-lighteval accelerate "model_name=RISys-Lab/RedSage-8B-Ins" \
+lighteval accelerate "model_name=RISys-Lab/RedSage-Qwen3-8B-Ins" \
     --custom-tasks eval/cybersecurity_benchmarks.py \
     --tasks "lighteval|cybermetrics:80|0" \
     --output-dir results/
@@ -304,14 +304,14 @@ If you run out of GPU memory:
 2. Reduce vLLM memory utilization:
    ```bash
    python eval/run_lighteval.py vllm \
-       --model RISys-Lab/RedSage-8B-Ins \
+       --model RISys-Lab/RedSage-Qwen3-8B-Ins \
        --tasks cybermetrics:80 \
        --vllm-gpu-memory-utilization 0.7
    ```
 3. Reduce max model length:
    ```bash
    python eval/run_lighteval.py vllm \
-       --model RISys-Lab/RedSage-8B-Ins \
+       --model RISys-Lab/RedSage-Qwen3-8B-Ins \
        --tasks cybermetrics:80 \
        --vllm-max-model-len 4096
    ```
@@ -338,9 +338,8 @@ Results are saved to the specified output directory (default: `results/`):
 
 ```
 results/
-├── details/           # Detailed per-sample predictions
-├── results.json       # Aggregate metrics
-└── config.json        # Evaluation configuration
+├── {model_name}/details/                       # Detailed per-sample predictions (optional)
+├── {model_name}/results_{timestamp}.json       # Aggregate metrics
 ```
 
 ### Example Results
@@ -349,14 +348,17 @@ results/
 
 ```json
 {
-  "lighteval|cybermetrics:80|0": {
-    "acc": 0.75,
-    "stderr": 0.048
+  ...,
+  "results": {
+    "cybermetrics:500|0": {
+      "acc": 0.894,
+      "acc_stderr": 0.013780704467887733
+    },
+    "all": {
+      "acc": 0.894,
+      "acc_stderr": 0.013780704467887733
+    }
   },
-  "lighteval|mmlu:cs_security|0": {
-    "exact_match": 0.68,
-    "stderr": 0.052
-  }
 }
 ```
 
@@ -374,16 +376,10 @@ Different tasks use different evaluation metrics:
 ```bash
 # Run a comprehensive evaluation
 python eval/run_lighteval.py vllm \
-    --model RISys-Lab/RedSage-8B-DPO \
+    --model RISys-Lab/RedSage-Qwen3-8B-DPO \
     --tasks cybermetrics:500,mmlu:cs_security,secbench:mcq-en,secure:maet_em \
     --output-dir results/comprehensive_eval
 
-# Expected output:
-# Processing task: lighteval|cybermetrics:500|0
-# Processing task: lighteval|mmlu:cs_security|0
-# Processing task: lighteval|secbench:mcq-en|0
-# Processing task: lighteval|secure:maet_em|0
-# 
 # Results saved to: results/comprehensive_eval/
 ```
 
