@@ -125,31 +125,41 @@ def chat_single_turn(
             {"role": "system", "content": system_prompt},
             {"role": "user", "content": user_message},
         ]
+        rollback_needed = True
     else:
         # Append the new user message to the conversation history
         messages.append({"role": "user", "content": user_message})
+        rollback_needed = True
     
-    # Apply chat template
-    text = tokenizer.apply_chat_template(
-        messages, tokenize=False, add_generation_prompt=True
-    )
-    
-    # Tokenize and move to device
-    inputs = tokenizer(text, return_tensors="pt").to(model.device)
-    
-    # Generate
-    with torch.no_grad():
-        outputs = model.generate(
-            **inputs,
-            max_new_tokens=max_tokens,
-            temperature=temperature,
-            do_sample=temperature > 0,
-            pad_token_id=tokenizer.pad_token_id or tokenizer.eos_token_id,
+    try:
+        # Apply chat template
+        text = tokenizer.apply_chat_template(
+            messages, tokenize=False, add_generation_prompt=True
         )
-    
-    # Extract only the assistant's response (skip the input tokens)
-    input_length = inputs.input_ids.shape[1]
-    response = tokenizer.decode(outputs[0][input_length:], skip_special_tokens=True)
+        
+        # Tokenize and move to device
+        inputs = tokenizer(text, return_tensors="pt").to(model.device)
+        
+        # Generate
+        with torch.no_grad():
+            outputs = model.generate(
+                **inputs,
+                max_new_tokens=max_tokens,
+                temperature=temperature,
+                do_sample=temperature > 0,
+                pad_token_id=tokenizer.pad_token_id or tokenizer.eos_token_id,
+            )
+        
+        # Extract only the assistant's response (skip the input tokens)
+        input_length = inputs.input_ids.shape[1]
+        response = tokenizer.decode(outputs[0][input_length:], skip_special_tokens=True)
+    except Exception:
+        # Roll back the appended user message if something went wrong
+        if rollback_needed and messages:
+            last = messages[-1]
+            if isinstance(last, dict) and last.get("role") == "user" and last.get("content") == user_message:
+                messages.pop()
+        raise
     
     return response.strip()
 
