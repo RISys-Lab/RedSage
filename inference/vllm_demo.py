@@ -262,6 +262,9 @@ def interactive_mode(
             print("\n\nGoodbye!")
             break
         except Exception as e:
+            # Remove the last user message if it was just added and caused an error
+            if messages and messages[-1].get("role") == "user" and messages[-1].get("content") == user_input:
+                messages.pop()
             print(f"\nError: {e}")
             print("Please try again.\n")
 
