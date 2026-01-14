@@ -1,0 +1,9 @@
+cti_bench:cti-mcq|5
+cti_bench:cti-rcm_em|5
+cybermetrics:500|5
+mmlu:cs_security|5
+secbench:mcq-en|5
+seceval:mcqa|5
+secure:maet|5
+secure:cwet|5
+secure:kcv_em|5
