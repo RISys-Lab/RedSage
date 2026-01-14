@@ -115,7 +115,10 @@ def chat_completion(
     if not response.choices:
         raise ValueError("No response generated")
     
-    return response.choices[0].message.content
+    content = response.choices[0].message.content
+    if content is None:
+        raise ValueError("Empty response content received from model")
+    return content
 
 
 def run_examples(
