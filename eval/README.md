@@ -13,13 +13,13 @@ This directory contains evaluation code and benchmarks for RedSage models on cyb
 
 ## Setup
 
-### 1. Environment
+### 1. Environment (uv)
 
-Create and activate the conda environment:
+Install uv first if needed (https://docs.astral.sh/uv/getting-started/installation/), then create and activate a uv virtual environment:
 
 ```bash
-conda create -n lighteval python=3.10
-conda activate lighteval
+uv venv --python 3.12 --seed
+source .venv/bin/activate
 ```
 
 ### 2. Install Lighteval
@@ -32,7 +32,7 @@ git submodule update --init --recursive
 
 # Install lighteval in editable mode
 cd eval/lighteval
-pip install -e .
+uv pip install -e .
 cd ../../
 ```
 
@@ -41,7 +41,7 @@ cd ../../
 Install additional dependencies required for the benchmarks:
 
 ```bash
-pip install cvss aenum
+uv pip install cvss aenum
 ```
 
 ### 4. Install vLLM (Optional)
@@ -49,7 +49,7 @@ pip install cvss aenum
 Use vLLM for faster and more efficient inference:
 
 ```bash
-pip install vllm --torch-backend=auto
+uv pip install vllm --torch-backend=auto
 ```
 
 Follow the [official installation tutorial](https://docs.vllm.ai/en/latest/getting_started/installation/)
@@ -290,7 +290,7 @@ If you get an error about lighteval not being found:
 ```bash
 git submodule update --init --recursive
 cd eval/lighteval
-pip install -e .
+uv pip install -e .
 cd ../../
 ```
 
@@ -299,7 +299,7 @@ cd ../../
 If you encounter import errors:
 
 ```bash
-pip install cvss aenum
+uv pip install cvss aenum
 ```
 
 ### CUDA Out of Memory
