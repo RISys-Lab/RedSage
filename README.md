@@ -32,7 +32,7 @@
 - [Citation](#-citation)
 
 ## 📰 News
-- 2026-01-13: Completed the lighteval implementation for RedSage-MCQ and related Cybersecurity benchmarks.
+- 2026-01-14: Added inference, deployment, and evaluation code (except OpenQA).
 - 2025-10-14: Update the README.md
 <!-- - 2025-08-12: Public release of **RedSage-Qwen3-8B-Base**, **-Ins**, **-DPO**.  
 - 2025-08-05: RedSage-Bench task definitions added to `eval/lighteval_tasks/`.  
