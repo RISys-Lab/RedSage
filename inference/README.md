@@ -60,7 +60,7 @@ uv pip install vllm --torch-backend=auto
 vllm serve RISys-Lab/RedSage-Qwen3-8B-DPO --port 8000 --host 0.0.0.0
 ```
 
-Follow the [official installation tutorial](https://docs.vllm.ai/en/latest/getting_started/installation/) if your hardware do not support cuda.
+Follow the [official installation tutorial](https://docs.vllm.ai/en/latest/getting_started/installation/) if your hardware does not support cuda.
 
 **Usage:**
 ```bash
