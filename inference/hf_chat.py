@@ -6,8 +6,8 @@ This script demonstrates how to use RedSage models (Ins/DPO variants) with
 the Hugging Face Transformers library for interactive chat inference.
 
 Usage:
-    python hf_chat.py --model RISys-Lab/RedSage-8B-Ins
-    python hf_chat.py --model RISys-Lab/RedSage-8B-DPO --max-tokens 512
+    python hf_chat.py --model RISys-Lab/RedSage-Qwen3-8B-Ins
+    python hf_chat.py --model RISys-Lab/RedSage-Qwen3-8B-DPO --max-tokens 512
 """
 
 import argparse
@@ -31,8 +31,8 @@ def parse_args():
     parser.add_argument(
         "--model",
         type=str,
-        default="RISys-Lab/RedSage-8B-Ins",
-        help="Model name or path (default: RISys-Lab/RedSage-8B-Ins)",
+        default="RISys-Lab/RedSage-Qwen3-8B-Ins",
+        help="Model name or path (default: RISys-Lab/RedSage-Qwen3-8B-Ins)",
     )
     parser.add_argument(
         "--max-tokens",

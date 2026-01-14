@@ -17,18 +17,17 @@ This guide covers deploying RedSage models using [vLLM](https://github.com/vllm-
 
 ## Quick Start
 
-```bash
-# Install vLLM
-pip install vllm
+> **Prerequisites:** Install vLLM first (see [Installation](#installation) section below).
 
+```bash
 # Start the server
-vllm serve RISys-Lab/RedSage-8B-DPO --port 8000
+vllm serve RISys-Lab/RedSage-Qwen3-8B-DPO --port 8000
 
 # Test with curl
 curl http://localhost:8000/v1/chat/completions \
   -H "Content-Type: application/json" \
   -d '{
-    "model": "RISys-Lab/RedSage-8B-DPO",
+    "model": "RISys-Lab/RedSage-Qwen3-8B-DPO",
     "messages": [
       {"role": "system", "content": "You are RedSage, a helpful cybersecurity assistant."},
       {"role": "user", "content": "What is SSRF?"}
@@ -40,21 +39,30 @@ curl http://localhost:8000/v1/chat/completions \
 
 ## Installation
 
+The commands below follow the official vLLM install guides.
+
 ### Prerequisites
 
-- **Python**: 3.8 or higher
-- **CUDA**: 11.8 or higher (for GPU acceleration)
-- **GPU**: NVIDIA GPU with at least 16GB VRAM for 8B models
-- **Operating System**: Linux (recommended) or Windows with WSL2
+- **Python**: 3.10–3.13 (officially tested versions)
+- **OS**: Linux; Windows users should run vLLM inside WSL2
+- **GPU**: NVIDIA GPU with compute capability ≥7.0; modern drivers required
+- **CUDA**: Bundled via the PyTorch wheels selected by vLLM (recent wheels target CUDA 12.x); separate CUDA installs are not needed when using the recommended commands
 
-### Install vLLM
+### Install vLLM (recommended)
 
 ```bash
-# Install via pip (recommended)
-pip install vllm
+# Create and seed an env (example with uv)
+uv venv --python 3.12 --seed
+source .venv/bin/activate
 
-# Or install from source for latest features
-pip install git+https://github.com/vllm-project/vllm.git
+# Install vLLM and let it pick the right torch backend (CUDA/CPU)
+uv pip install vllm --torch-backend=auto
+```
+
+### Alternative (pip-only)
+
+```bash
+pip install vllm --torch-backend=auto
 ```
 
 ### Verify Installation
@@ -72,12 +80,14 @@ python -c "import vllm; print(vllm.__version__)"
 The simplest way to start a vLLM server for RedSage:
 
 ```bash
-vllm serve RISys-Lab/RedSage-8B-DPO \
+vllm serve RISys-Lab/RedSage-Qwen3-8B-DPO \
   --port 8000 \
   --host 0.0.0.0
 ```
 
 This launches an OpenAI-compatible API server at `http://localhost:8000/v1`.
+
+> vLLM will load generation defaults from a model's `generation_config.json` (if present). Override any setting at serve time with CLI flags (e.g., `--max-model-len`, `--temperature`) or a custom config via `--generation-config`.
 
 ### Model Variants
 
@@ -85,13 +95,13 @@ RedSage offers multiple model variants:
 
 ```bash
 # Instruction-tuned model (recommended for most use cases)
-vllm serve RISys-Lab/RedSage-8B-Ins --port 8000
+vllm serve RISys-Lab/RedSage-Qwen3-8B-Ins --port 8000
 
 # DPO-aligned model (preference-optimized responses)
-vllm serve RISys-Lab/RedSage-8B-DPO --port 8000
+vllm serve RISys-Lab/RedSage-Qwen3-8B-DPO --port 8000
 
 # Base model (for fine-tuning or research)
-vllm serve RISys-Lab/RedSage-8B-Base --port 8000
+vllm serve RISys-Lab/RedSage-Qwen3-8B-Base --port 8000
 ```
 
 > **Note:** The `-Ins` and `-DPO` variants are chat-aligned models. Do not use `-Base` for direct chat inference without fine-tuning.
@@ -105,15 +115,12 @@ vllm serve RISys-Lab/RedSage-8B-Base --port 8000
 Control the maximum context window size:
 
 ```bash
-vllm serve RISys-Lab/RedSage-8B-DPO \
+vllm serve RISys-Lab/RedSage-Qwen3-8B-DPO \
   --max-model-len 32768 \
   --port 8000
 ```
 
-**Recommendations:**
-- Default: 8192 tokens (if not specified)
-- Extended: 32768 tokens (for long documents/conversations)
-- Memory-constrained: 4096 tokens
+Choose a context length that fits your GPU memory budget; higher limits require more VRAM.
 
 ### Multi-GPU Deployment
 
@@ -121,12 +128,12 @@ Distribute the model across multiple GPUs using tensor parallelism:
 
 ```bash
 # Use 2 GPUs
-vllm serve RISys-Lab/RedSage-8B-DPO \
+vllm serve RISys-Lab/RedSage-Qwen3-8B-DPO \
   --tensor-parallel-size 2 \
   --port 8000
 
 # Use 4 GPUs
-vllm serve RISys-Lab/RedSage-8B-DPO \
+vllm serve RISys-Lab/RedSage-Qwen3-8B-DPO \
   --tensor-parallel-size 4 \
   --port 8000
 ```
@@ -142,29 +149,18 @@ Control the precision for performance/memory trade-offs:
 
 ```bash
 # BFloat16 (recommended for A100, H100)
-vllm serve RISys-Lab/RedSage-8B-DPO \
+vllm serve RISys-Lab/RedSage-Qwen3-8B-DPO \
   --dtype bfloat16 \
   --port 8000
 
 # Float16 (for older GPUs)
-vllm serve RISys-Lab/RedSage-8B-DPO \
+vllm serve RISys-Lab/RedSage-Qwen3-8B-DPO \
   --dtype float16 \
   --port 8000
 
 # Auto-detect best dtype
-vllm serve RISys-Lab/RedSage-8B-DPO \
+vllm serve RISys-Lab/RedSage-Qwen3-8B-DPO \
   --dtype auto \
-  --port 8000
-```
-
-### Batch Processing
-
-Increase throughput with request batching:
-
-```bash
-vllm serve RISys-Lab/RedSage-8B-DPO \
-  --max-num-seqs 256 \
-  --max-num-batched-tokens 8192 \
   --port 8000
 ```
 
@@ -173,7 +169,7 @@ vllm serve RISys-Lab/RedSage-8B-DPO \
 Some models may require remote code execution:
 
 ```bash
-vllm serve RISys-Lab/RedSage-8B-DPO \
+vllm serve RISys-Lab/RedSage-Qwen3-8B-DPO \
   --trust-remote-code \
   --port 8000
 ```
@@ -183,14 +179,11 @@ vllm serve RISys-Lab/RedSage-8B-DPO \
 A production-ready configuration:
 
 ```bash
-vllm serve RISys-Lab/RedSage-8B-DPO \
+vllm serve RISys-Lab/RedSage-Qwen3-8B-DPO \
   --host 0.0.0.0 \
   --port 8000 \
-  --max-model-len 32768 \
   --tensor-parallel-size 2 \
-  --dtype bfloat16 \
-  --max-num-seqs 256 \
-  --disable-log-requests
+  --dtype bfloat16
 ```
 
 ---
@@ -218,7 +211,7 @@ client = OpenAI(
 
 # Chat completion
 response = client.chat.completions.create(
-    model="RISys-Lab/RedSage-8B-DPO",
+    model="RISys-Lab/RedSage-Qwen3-8B-DPO",
     messages=[
         {"role": "system", "content": "You are RedSage, a helpful cybersecurity assistant."},
         {"role": "user", "content": "Explain SQL injection and how to prevent it."}
@@ -239,7 +232,7 @@ print(response.choices[0].message.content)
 curl http://localhost:8000/v1/chat/completions \
   -H "Content-Type: application/json" \
   -d '{
-    "model": "RISys-Lab/RedSage-8B-DPO",
+    "model": "RISys-Lab/RedSage-Qwen3-8B-DPO",
     "messages": [
       {"role": "system", "content": "You are RedSage, a helpful cybersecurity assistant."},
       {"role": "user", "content": "What are the OWASP Top 10?"}
@@ -269,7 +262,7 @@ const client = new OpenAI({
 
 async function chat() {
   const response = await client.chat.completions.create({
-    model: 'RISys-Lab/RedSage-8B-DPO',
+    model: 'RISys-Lab/RedSage-Qwen3-8B-DPO',
     messages: [
       { role: 'system', content: 'You are RedSage, a helpful cybersecurity assistant.' },
       { role: 'user', content: 'What is XSS?' }
@@ -294,7 +287,7 @@ from langchain.schema import HumanMessage, SystemMessage
 llm = ChatOpenAI(
     openai_api_base="http://localhost:8000/v1",
     openai_api_key="EMPTY",
-    model_name="RISys-Lab/RedSage-8B-DPO",
+    model_name="RISys-Lab/RedSage-Qwen3-8B-DPO",
     temperature=0.2,
 )
 
@@ -318,7 +311,7 @@ print(response.content)
 ```dockerfile
 FROM vllm/vllm-openai:latest
 
-ENV MODEL_NAME=RISys-Lab/RedSage-8B-DPO
+ENV MODEL_NAME=RISys-Lab/RedSage-Qwen3-8B-DPO
 ENV HOST=0.0.0.0
 ENV PORT=8000
 
@@ -337,7 +330,7 @@ docker run --gpus all -p 8000:8000 redsage-vllm
 
 ```bash
 docker run --gpus all -p 8000:8000 \
-  -e MODEL_NAME=RISys-Lab/RedSage-8B-Ins \
+  -e MODEL_NAME=RISys-Lab/RedSage-Qwen3-8B-Ins \
   -e PORT=8001 \
   redsage-vllm
 ```
@@ -366,7 +359,7 @@ spec:
         image: vllm/vllm-openai:latest
         args:
           - --model
-          - RISys-Lab/RedSage-8B-DPO
+          - RISys-Lab/RedSage-Qwen3-8B-DPO
           - --host
           - "0.0.0.0"
           - --port
@@ -430,7 +423,7 @@ After=network.target
 Type=simple
 User=vllm
 WorkingDirectory=/opt/redsage
-ExecStart=/usr/local/bin/vllm serve RISys-Lab/RedSage-8B-DPO \
+ExecStart=/usr/local/bin/vllm serve RISys-Lab/RedSage-Qwen3-8B-DPO \
   --host 0.0.0.0 \
   --port 8000 \
   --max-model-len 32768 \
@@ -455,61 +448,10 @@ sudo systemctl status redsage-vllm
 
 ## Performance Tuning
 
-### Memory Optimization
-
-**Reduce KV cache size:**
-
-```bash
-vllm serve RISys-Lab/RedSage-8B-DPO \
-  --gpu-memory-utilization 0.85 \
-  --port 8000
-```
-
-**Enable CPU offloading (for limited VRAM):**
-
-```bash
-vllm serve RISys-Lab/RedSage-8B-DPO \
-  --cpu-offload-gb 16 \
-  --port 8000
-```
-
-### Throughput Optimization
-
-**Increase batch size:**
-
-```bash
-vllm serve RISys-Lab/RedSage-8B-DPO \
-  --max-num-seqs 512 \
-  --max-num-batched-tokens 16384 \
-  --port 8000
-```
-
-**Enable speculative decoding (experimental):**
-
-```bash
-vllm serve RISys-Lab/RedSage-8B-DPO \
-  --speculative-model <smaller-model> \
-  --num-speculative-tokens 5 \
-  --port 8000
-```
-
-### Latency Optimization
-
-**Reduce batch size for lower latency:**
-
-```bash
-vllm serve RISys-Lab/RedSage-8B-DPO \
-  --max-num-seqs 64 \
-  --port 8000
-```
-
-**Disable continuous batching:**
-
-```bash
-vllm serve RISys-Lab/RedSage-8B-DPO \
-  --disable-frontend-multiprocessing \
-  --port 8000
-```
+- Adjust `--max-model-len` to fit GPU memory; longer contexts use more VRAM.
+- Use `--tensor-parallel-size N` to shard across multiple GPUs for larger context or throughput.
+- Select a dtype suitable for your hardware: `--dtype bfloat16` on modern GPUs, `--dtype float16` otherwise.
+- Choose an attention backend if needed (e.g., `--attention-backend FLASH_ATTN` on CUDA builds) based on the official backend list.
 
 ---
 
@@ -523,17 +465,12 @@ vllm serve RISys-Lab/RedSage-8B-DPO \
 
 1. Reduce context length:
    ```bash
-   vllm serve RISys-Lab/RedSage-8B-DPO --max-model-len 4096
+   vllm serve RISys-Lab/RedSage-Qwen3-8B-DPO --max-model-len 4096
    ```
 
-2. Lower GPU memory utilization:
+2. Use tensor parallelism across multiple GPUs:
    ```bash
-   vllm serve RISys-Lab/RedSage-8B-DPO --gpu-memory-utilization 0.8
-   ```
-
-3. Use tensor parallelism across multiple GPUs:
-   ```bash
-   vllm serve RISys-Lab/RedSage-8B-DPO --tensor-parallel-size 2
+   vllm serve RISys-Lab/RedSage-Qwen3-8B-DPO --tensor-parallel-size 2
    ```
 
 ### Slow Inference
@@ -543,13 +480,11 @@ vllm serve RISys-Lab/RedSage-8B-DPO \
 **Solutions:**
 
 1. Enable batching (if not already):
-   ```bash
-   vllm serve RISys-Lab/RedSage-8B-DPO --max-num-seqs 128
-   ```
+  Ensure your client batches requests when possible.
 
 2. Use appropriate data type:
    ```bash
-   vllm serve RISys-Lab/RedSage-8B-DPO --dtype bfloat16
+   vllm serve RISys-Lab/RedSage-Qwen3-8B-DPO --dtype bfloat16
    ```
 
 3. Increase GPU resources (more GPUs, tensor parallelism).
@@ -572,7 +507,7 @@ vllm serve RISys-Lab/RedSage-8B-DPO \
 
 3. Ensure host is set to `0.0.0.0` for external access:
    ```bash
-   vllm serve RISys-Lab/RedSage-8B-DPO --host 0.0.0.0 --port 8000
+   vllm serve RISys-Lab/RedSage-Qwen3-8B-DPO --host 0.0.0.0 --port 8000
    ```
 
 ### Model Loading Failures
@@ -588,7 +523,7 @@ vllm serve RISys-Lab/RedSage-8B-DPO \
 
 2. Manually download the model:
    ```bash
-   huggingface-cli download RISys-Lab/RedSage-8B-DPO
+   huggingface-cli download RISys-Lab/RedSage-Qwen3-8B-DPO
    ```
 
 3. Specify local model path:
@@ -615,41 +550,15 @@ vllm serve RISys-Lab/RedSage-8B-DPO \
 
 ## Advanced Topics
 
-### Quantization
-
-For reduced memory footprint, use quantized models (when available):
-
-```bash
-# AWQ quantization (4-bit)
-vllm serve RISys-Lab/RedSage-8B-DPO-AWQ --quantization awq --port 8000
-
-# GPTQ quantization (4-bit)
-vllm serve RISys-Lab/RedSage-8B-DPO-GPTQ --quantization gptq --port 8000
-```
-
-> **Note:** Quantized variants will be released separately. Check the model collection on Hugging Face.
-
 ### Custom Chat Templates
 
-Override the default chat template:
+Override the tokenizer chat template if you need a different prompt format:
 
 ```bash
-vllm serve RISys-Lab/RedSage-8B-DPO \
+vllm serve RISys-Lab/RedSage-Qwen3-8B-DPO \
   --chat-template /path/to/custom_template.jinja \
   --port 8000
 ```
-
-### Monitoring and Metrics
-
-Enable Prometheus metrics:
-
-```bash
-vllm serve RISys-Lab/RedSage-8B-DPO \
-  --enable-metrics \
-  --port 8000
-```
-
-Access metrics at `http://localhost:8000/metrics`.
 
 ---
 

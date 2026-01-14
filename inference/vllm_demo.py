@@ -6,13 +6,13 @@ This script demonstrates how to interact with a RedSage model served via vLLM
 using the OpenAI-compatible API.
 
 Prerequisites:
-    - vLLM server running (e.g., `vllm serve RISys-Lab/RedSage-8B-DPO --port 8000`)
+    - vLLM server running (e.g., `vllm serve RISys-Lab/RedSage-Qwen3-8B-DPO --port 8000`)
     - openai Python package installed (`pip install openai`)
 
 Usage:
     python vllm_demo.py
     python vllm_demo.py --base-url http://localhost:8000/v1
-    python vllm_demo.py --model RISys-Lab/RedSage-8B-Ins
+    python vllm_demo.py --model RISys-Lab/RedSage-Qwen3-8B-Ins
 """
 
 import argparse
@@ -44,8 +44,8 @@ def parse_args():
     parser.add_argument(
         "--model",
         type=str,
-        default="RISys-Lab/RedSage-8B-DPO",
-        help="Model name (must match server) (default: RISys-Lab/RedSage-8B-DPO)",
+        default="RISys-Lab/RedSage-Qwen3-8B-DPO",
+        help="Model name (must match server) (default: RISys-Lab/RedSage-Qwen3-8B-DPO)",
     )
     parser.add_argument(
         "--api-key",

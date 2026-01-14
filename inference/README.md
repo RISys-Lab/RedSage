@@ -8,9 +8,12 @@ This directory contains example scripts for running inference with RedSage model
 
 Interactive chat interface using the Hugging Face Transformers library. Ideal for local inference and testing.
 
-**Requirements:**
+**Setup (uv):**
+Install uv first if needed (https://docs.astral.sh/uv/getting-started/installation/), then:
 ```bash
-pip install transformers torch accelerate
+uv venv --python 3.12 --seed
+source .venv/bin/activate
+uv pip install transformers torch accelerate
 ```
 
 **Usage:**
@@ -19,7 +22,7 @@ pip install transformers torch accelerate
 python hf_chat.py
 
 # Specify a different model
-python hf_chat.py --model RISys-Lab/RedSage-8B-DPO
+python hf_chat.py --model RISys-Lab/RedSage-Qwen3-8B-DPO
 
 # Adjust generation parameters
 python hf_chat.py --max-tokens 512 --temperature 0.2
@@ -32,6 +35,7 @@ python hf_chat.py --system-prompt "You are a penetration testing expert."
 - Interactive chat mode
 - Configurable model, temperature, and token limits
 - Custom system prompts
+- Uses the model's chat template via `apply_chat_template` and sets `pad_token_id` to avoid special-token issues
 - Support for GPU/CPU inference
 
 ---
@@ -40,17 +44,23 @@ python hf_chat.py --system-prompt "You are a penetration testing expert."
 
 Client for interacting with RedSage models served via vLLM's OpenAI-compatible API.
 
-**Requirements:**
+**Requirements (uv):**
 ```bash
-pip install openai
+uv venv --python 3.12 --seed
+source .venv/bin/activate
+uv pip install openai
 ```
 
 **Prerequisites:**
 Start a vLLM server first:
 ```bash
-pip install vllm
-vllm serve RISys-Lab/RedSage-8B-DPO --port 8000
+uv venv --python 3.12 --seed
+source .venv/bin/activate
+uv pip install vllm --torch-backend=auto
+vllm serve RISys-Lab/RedSage-Qwen3-8B-DPO --port 8000 --host 0.0.0.0
 ```
+
+Follow the [official installation tutorial](https://docs.vllm.ai/en/latest/getting_started/installation/) if your hardware do not support cuda.
 
 **Usage:**
 ```bash
@@ -61,7 +71,7 @@ python vllm_demo.py
 python vllm_demo.py --base-url http://192.168.1.100:8000/v1
 
 # Specify model name
-python vllm_demo.py --model RISys-Lab/RedSage-8B-Ins
+python vllm_demo.py --model RISys-Lab/RedSage-Qwen3-8B-Ins
 
 # Adjust generation parameters
 python vllm_demo.py --max-tokens 1024 --temperature 0.5
@@ -127,7 +137,7 @@ huggingface-cli login
 - Ensure `--host 0.0.0.0` was used when starting the server
 
 **API Errors:**
-- Verify OpenAI package is installed: `pip install openai`
+- Verify OpenAI package is installed: `uv pip install openai`
 - Check that model name in script matches server model name
 
 ---
@@ -145,7 +155,7 @@ import sys
 sys.path.insert(0, '.')
 from hf_chat import load_model, chat_single_turn
 
-model, tokenizer = load_model('RISys-Lab/RedSage-8B-Ins')
+model, tokenizer = load_model('RISys-Lab/RedSage-Qwen3-8B-Ins')
 response = chat_single_turn(
     model, tokenizer,
     'Explain SQL injection',
@@ -172,7 +182,7 @@ queries = [
 
 for query in queries:
     response = client.chat.completions.create(
-        model="RISys-Lab/RedSage-8B-DPO",
+        model="RISys-Lab/RedSage-Qwen3-8B-DPO",
         messages=[
             {"role": "system", "content": "You are RedSage, a helpful cybersecurity assistant."},
             {"role": "user", "content": query}
