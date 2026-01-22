@@ -34,7 +34,7 @@ def get_available_tasks():
         "CuratedTasks": [
             "tasks/redsage_mcqs_base.txt",
             "tasks/redsage_mcqs_ins.txt",
-            "tasks/related_benchmarks_base.txt"
+            "tasks/related_benchmarks_base.txt",
             "tasks/related_benchmarks_ins.txt",
         ],
         "CyberMetrics": [
