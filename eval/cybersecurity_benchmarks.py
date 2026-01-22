@@ -414,13 +414,14 @@ def cti_rcm_prompt_fn(line: Dict, task_name: Optional[str] = None, is_direct_ans
     validate_mcq_line(line, ["Description", "Prompt", "GT"])
     
     instruction = "Analyze the following CVE description and map it to the appropriate CWE."
-    prompt = line['Prompt']
+    instruction_new = "Analyze the following CVE description and map it to the appropriate CWE. Answer the CWE ID in the format CWE-XXXX."
+    prompt = line['Prompt'].replace(instruction, instruction_new)
 
     if is_direct_answer:
         cve_description = line["Description"]
-        prompt = f"{instruction}\n\nCVE Description: {cve_description}. Directly provide the CWE ID (e.g., CWE-XXX) without any explanation. CWE ID is:"
-
+        prompt = f"{instruction_new}\n\nCVE Description: {cve_description} The CWE is"
     solution = line['GT']
+
 
     return Doc(
         task_name=task_name,
@@ -763,49 +764,51 @@ class CyberMetricEvalTask(LightevalTaskConfig):
         )
 
 
-class CustomCTIBenchEvalTask(LightevalTaskConfig):
+class CTIBenchEvalTask(LightevalTaskConfig):
     """Configuration for CTI-Bench evaluation tasks."""
 
-    def __init__(self, name: str, hf_subset: str):
-        if name == "cti_bench:cti-mcq_em":
+    def __init__(self, name: str, hf_subset: str, legacy: bool = False):
+        # Remove _ori if present
+        ori_name = name.replace("_ori", "")
+        if ori_name == "cti_bench:cti-mcq_em":
             prompt_fn = partial(cti_mcq_prompt_fn, is_direct_answer=False)
             metrics = [regex_mcq_metrics]
             generation_size = 1024
             stop_sequence = []
-        elif name == "cti_bench:cti-mcq_em_direct":
+        elif ori_name == "cti_bench:cti-mcq_em_direct":
             prompt_fn = cti_mcq_prompt_fn
             metrics = [regex_mcq_metrics]
             generation_size = 100
             stop_sequence = ["\n"]
-        elif name == "cti_bench:cti-mcq":
+        elif ori_name == "cti_bench:cti-mcq":
             prompt_fn = cti_mcq_prompt_fn
             metrics = [Metrics.loglikelihood_acc]
             generation_size = -1
             stop_sequence = None
-        elif name == "cti_bench:cti-rcm_em":
+        elif ori_name == "cti_bench:cti-rcm_em":
             prompt_fn = partial(cti_rcm_prompt_fn, is_direct_answer=False)
             metrics = [cti_rcm_metrics]
             generation_size = 512
             stop_sequence = []
-        elif name == "cti_bench:cti-rcm_em_direct":
+        elif ori_name == "cti_bench:cti-rcm_em_direct":
             prompt_fn = partial(cti_rcm_prompt_fn, is_direct_answer=True)
-            metrics = [cti_rcm_metrics]
-            generation_size = 512
-            stop_sequence = []
-        elif name == "cti_bench:cti-rcm":
-            prompt_fn = cti_rcm_prompt_fn
             metrics = [cti_rcm_metrics]
             generation_size = 100
             stop_sequence = ["\n"]
+        # elif name == "cti_bench:cti-rcm":
+        #     prompt_fn = cti_rcm_prompt_fn
+        #     metrics = [cti_rcm_metrics]
+        #     generation_size = 100
+        #     stop_sequence = ["\n"]
         else:
             raise ValueError(f"Unknown task name '{name}' for CTI-Bench evaluation task.")
         super().__init__(
             name=name,
             hf_subset=hf_subset,
             prompt_function=prompt_fn,
-            hf_repo="RISys-Lab/Benchmarks_CyberSec_CTI-Bench",
+            hf_repo="RISys-Lab/Benchmarks_CyberSec_CTI-Bench" if not legacy else "AI4Sec/cti-bench",
             metrics=metrics,
-            hf_avail_splits=["validation", "test"],
+            hf_avail_splits=["validation", "test"] if not legacy else ["test"],
             evaluation_splits=["test"],
             few_shots_split=None,
             few_shots_select=None,
@@ -940,12 +943,18 @@ CYBERMETRICS_TASKS = [
 
 # 2. CTI-Bench
 CTIBENCH_TASKS = [
-    CustomCTIBenchEvalTask(name="cti_bench:cti-mcq_em", hf_subset="cti-mcq"),
-    CustomCTIBenchEvalTask(name="cti_bench:cti-mcq_em_direct", hf_subset="cti-mcq"),
-    CustomCTIBenchEvalTask(name="cti_bench:cti-mcq", hf_subset="cti-mcq"),
-    CustomCTIBenchEvalTask(name="cti_bench:cti-rcm", hf_subset="cti-rcm"),
-    CustomCTIBenchEvalTask(name="cti_bench:cti-rcm_em", hf_subset="cti-rcm"),
-    CustomCTIBenchEvalTask(name="cti_bench:cti-rcm_em_direct", hf_subset="cti-rcm"),
+    CTIBenchEvalTask(name="cti_bench:cti-mcq", hf_subset="cti-mcq"),
+    CTIBenchEvalTask(name="cti_bench:cti-mcq_em", hf_subset="cti-mcq"),
+    CTIBenchEvalTask(name="cti_bench:cti-mcq_em_direct", hf_subset="cti-mcq"),
+    CTIBenchEvalTask(name="cti_bench:cti-rcm_em", hf_subset="cti-rcm"),
+    CTIBenchEvalTask(name="cti_bench:cti-rcm_em_direct", hf_subset="cti-rcm"),
+
+    # Legacy versions
+    CTIBenchEvalTask(name="cti_bench_ori:cti-mcq", hf_subset="cti-mcq", legacy=True),
+    CTIBenchEvalTask(name="cti_bench_ori:cti-mcq_em", hf_subset="cti-mcq", legacy=True),
+    CTIBenchEvalTask(name="cti_bench_ori:cti-mcq_em_direct", hf_subset="cti-mcq", legacy=True),
+    CTIBenchEvalTask(name="cti_bench_ori:cti-rcm_em", hf_subset="cti-rcm", legacy=True),
+    CTIBenchEvalTask(name="cti_bench_ori:cti-rcm_em_direct", hf_subset="cti-rcm", legacy=True),
 ]
 
 # 3. MMLU Computer Security

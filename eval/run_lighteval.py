@@ -18,12 +18,24 @@ import subprocess
 from pathlib import Path
 
 def get_available_tasks():
-    """Return a dictionary of available task categories and their tasks."""
+    """
+    Return a dictionary of available task categories and their tasks.
+    
+    This function defines all supported evaluation tasks across multiple benchmark suites
+    including CyberMetrics, CTI-Bench, MMLU, SECURE, SecBench, and SecEval. Tasks can be
+    run individually or in combination.
+    
+    Returns:
+        dict: A dictionary where keys are category names (str) and values are lists of
+              task identifiers (str). Task identifiers are either file paths (for curated
+              tasks) or lighteval task specifications (e.g., 'cybermetrics:80').
+    """
     return {
         "CuratedTasks": [
-            "tasks/redsage_mcqs.txt",
-            "tasks/related_benchmarks_ins.txt",
+            "tasks/redsage_mcqs_base.txt",
+            "tasks/redsage_mcqs_ins.txt",
             "tasks/related_benchmarks_base.txt"
+            "tasks/related_benchmarks_ins.txt",
         ],
         "CyberMetrics": [
             "cybermetrics:80",
@@ -39,7 +51,6 @@ def get_available_tasks():
             "cti_bench:cti-mcq",
             "cti_bench:cti-mcq_em",
             "cti_bench:cti-mcq_em_direct",
-            "cti_bench:cti-rcm",
             "cti_bench:cti-rcm_em",
             "cti_bench:cti-rcm_em_direct",
         ],
@@ -77,7 +88,16 @@ def get_available_tasks():
 
 
 def list_tasks():
-    """Print all available tasks organized by category."""
+    """
+    Print all available tasks organized by category.
+    
+    Displays a formatted list of all available evaluation tasks grouped by their
+    benchmark category. For curated tasks, displays file paths. For lighteval tasks,
+    displays the task specification in the format required for command-line execution.
+    
+    Returns:
+        None
+    """
     tasks = get_available_tasks()
     print("\n=== Available Evaluation Tasks ===\n")
     for category, task_list in tasks.items():
@@ -92,6 +112,16 @@ def list_tasks():
 
 
 def main():
+    """
+    Main entry point for the lighteval evaluation runner.
+    
+    Parses command-line arguments, validates inputs, and constructs and executes a
+    lighteval command to run cybersecurity benchmarks on RedSage models. Supports
+    multiple backends (accelerate and vLLM) and flexible task specification.
+    
+    Returns:
+        int: Exit code (0 for success, non-zero for failure)
+    """
     parser = argparse.ArgumentParser(
         description="Run RedSage cybersecurity benchmark evaluations using lighteval",
         formatter_class=argparse.RawDescriptionHelpFormatter,
@@ -123,7 +153,7 @@ Examples:
       --model RISys-Lab/RedSage-Qwen3-8B-Ins \\
       --tasks cybermetrics:80 \\
       --vllm-gpu-memory-utilization 0.8 \\
-      --vllm-max-model-len 8192
+      --max-model-len 8192
         """,
     )
     
@@ -178,6 +208,18 @@ Examples:
         action="store_true",
         help="Save detailed evaluation results",
     )
+
+    chat_template_group = parser.add_mutually_exclusive_group()
+    chat_template_group.add_argument(
+        "--use-chat-template",
+        action="store_true",
+        help="Force lighteval to use the model chat template",
+    )
+    chat_template_group.add_argument(
+        "--no-chat-template",
+        action="store_true",
+        help="Disable the model chat template (for base models)",
+    )
     
     # vLLM-specific arguments
     parser.add_argument(
@@ -188,9 +230,11 @@ Examples:
     )
     
     parser.add_argument(
+        "--max-model-len",
         "--vllm-max-model-len",
+        dest="max_model_len",
         type=int,
-        help="Maximum model sequence length for vLLM",
+        help="Maximum model sequence length",
     )
     
     parser.add_argument(
@@ -202,19 +246,20 @@ Examples:
     
     args = parser.parse_args()
     
-    # Handle --list-tasks
+    # Handle --list-tasks flag: display available tasks and exit
     if args.list_tasks:
         list_tasks()
         return 0
     
-    # Validate required arguments
+    # Validate required arguments: model and tasks are mandatory
     if not args.model:
         parser.error("--model is required (unless using --list-tasks)")
     
     if not args.tasks:
         parser.error("--tasks is required (unless using --list-tasks)")
     
-    # Get the directory where this script is located
+    # Locate and validate the custom tasks module
+    # This module contains the cybersecurity benchmark task definitions
     script_dir = Path(__file__).parent.absolute()
     custom_tasks_path = script_dir / "cybersecurity_benchmarks.py"
     
@@ -222,73 +267,96 @@ Examples:
         print(f"Error: Custom tasks file not found at {custom_tasks_path}", file=sys.stderr)
         return 1
     
-    # Format tasks for lighteval
+    # Parse and format tasks for lighteval execution
+    # Tasks can be either: (1) file paths to curated task files, or
+    # (2) lighteval task specifications with optional few-shot parameters
     task_list = []
     if args.tasks.strip().startswith("tasks/"):
+        # Handle curated task file specification
         current_dir = os.path.dirname(os.path.abspath(__file__))
         task_file_path = os.path.join(current_dir, args.tasks.strip())
         if not os.path.isfile(task_file_path):
             print(f"Error: Task file not found at {task_file_path}", file=sys.stderr)
             return 1
-        # If a curated task file is provided
         task_list.append(task_file_path)
     else:
+        # Handle comma-separated lighteval task specifications
         for task in args.tasks.split(","):
             task = task.strip()
             if task:
-                # Append few-shot suffix if not already present. Check |<number> at end
+                # Append few-shot parameter if not already specified
+                # Task format: 'taskname' or 'taskname|num_fewshot'
                 if not task.split("|")[-1].isdigit():
                     task = f"{task}|{args.num_fewshot}"
                 task_list.append(task)
     
+    # Convert task list to comma-separated string for lighteval
     tasks_str = ",".join(task_list)
     
-    # Build lighteval command
+    # Build the lighteval command to be executed
+    # Format: lighteval <backend> <model_args> [options] <tasks>
     cmd = [
         "lighteval",
         args.backend,
     ]
     
-    # Add model configuration
+    # Configure model parameters based on selected backend (vLLM or Accelerate)
     if args.backend == "vllm":
+        # vLLM backend configuration for optimized GPU inference
         model_args = [
             f"model_name={args.model}",
-            f"gpu_memory_utilisation={args.vllm_gpu_memory_utilization}",
+            f"gpu_memory_utilization={args.vllm_gpu_memory_utilization}",
             f"tensor_parallel_size={args.vllm_tensor_parallel_size}",
         ]
-        if args.vllm_max_model_len:
-            model_args.append(f"max_model_len={args.vllm_max_model_len}")
+        if args.max_model_len:
+            model_args.append(f"max_model_length={args.max_model_len}")
+        if args.use_chat_template:
+            model_args.append("override_chat_template=True")
+        elif args.no_chat_template:
+            model_args.append("override_chat_template=False")
         cmd.append(",".join(model_args))
     else:
-        cmd.append(f"model_name={args.model}")
+        # Accelerate backend configuration for standard distributed inference
+        model_args = [f"model_name={args.model}"]
+        if args.max_model_len:
+            model_args.append(f"max_length={args.max_model_len}")
+        if args.use_chat_template:
+            model_args.append("override_chat_template=True")
+        elif args.no_chat_template:
+            model_args.append("override_chat_template=False")
+        cmd.append(",".join(model_args))
 
+    # Optional flag to save detailed per-sample evaluation results
     if args.save_details:
         cmd.append("--save-details")
     
-    # Add common arguments
+    # Add common lighteval arguments
     cmd.extend([
-        "--custom-tasks", str(custom_tasks_path),
-        "--output-dir", args.output_dir,
-        tasks_str
+        "--custom-tasks", str(custom_tasks_path),  # Path to custom cybersecurity benchmarks
+        "--output-dir", args.output_dir,            # Output directory for results
+        tasks_str                                    # Tasks to evaluate
     ])
     
+    # Optional: limit number of samples per task (useful for testing)
     if args.max_samples:
         cmd.extend(["--max-samples", str(args.max_samples)])
     
-    # Print the command being executed
+    # Display the command being executed for transparency and debugging
     print("\n" + "="*80)
     print("Running lighteval with the following command:")
     print(" ".join(cmd))
     print("="*80 + "\n")
     
-    # Execute lighteval
+    # Execute lighteval and handle potential errors
     try:
         result = subprocess.run(cmd, check=True)
         return result.returncode
     except subprocess.CalledProcessError as e:
+        # lighteval process failed with non-zero exit code
         print(f"\nError: lighteval failed with exit code {e.returncode}", file=sys.stderr)
         return e.returncode
     except FileNotFoundError:
+        # lighteval command is not available in the environment
         print("\nError: lighteval command not found. Please ensure lighteval is installed:", file=sys.stderr)
         print("  cd eval/lighteval && pip install -e .", file=sys.stderr)
         return 1

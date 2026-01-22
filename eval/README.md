@@ -44,12 +44,12 @@ Install additional dependencies required for the benchmarks:
 uv pip install cvss aenum
 ```
 
-### 4. Install vLLM (Optional)
+### 4. Install vLLM (Recommended)
 
 Use vLLM for faster and more efficient inference:
 
 ```bash
-uv pip install vllm --torch-backend=auto
+uv pip install vllm==0.10.1.1 ray more_itertools
 ```
 
 Follow the [official installation tutorial](https://docs.vllm.ai/en/latest/getting_started/installation/)
@@ -63,11 +63,11 @@ We provide a convenient wrapper script `run_lighteval.py` for easy evaluation:
 # List all available tasks
 python eval/run_lighteval.py --list-tasks
 
-# Run a single task with Accelerate backend (default)
-python eval/run_lighteval.py --model RISys-Lab/RedSage-Qwen3-8B-Ins --tasks cybermetrics:80
-
 # Run with vLLM backend (recommended for faster inference)
 python eval/run_lighteval.py vllm --model RISys-Lab/RedSage-Qwen3-8B-Ins --tasks cybermetrics:80
+
+# Run a single task with Accelerate backend (default)
+python eval/run_lighteval.py --model RISys-Lab/RedSage-Qwen3-8B-Ins --tasks cybermetrics:80
 
 # Run multiple tasks
 python eval/run_lighteval.py vllm \
@@ -87,16 +87,19 @@ python eval/run_lighteval.py [backend] --model MODEL_NAME --tasks TASK_LIST [OPT
 ```
 
 **Arguments:**
-- `backend`: Choose `accelerate` (default) or `vllm`
+- `backend`: Choose `accelerate` (default) or `vllm` (recommended)
 - `--model`: Model name or path (e.g., `RISys-Lab/RedSage-Qwen3-8B-Ins`)
 - `--tasks`: Comma-separated list of tasks (e.g., `cybermetrics:80,mmlu:cs_security`)
 - `--output-dir`: Directory to save results (default: `results`)
 - `--num-fewshot`: Number of few-shot examples (default: 0)
 - `--max-samples`: Limit samples per task (useful for testing)
+- `--max-model-len` (alias: `--vllm-max-model-len`): Maximum sequence length (default: model default max-length)
+- `--use-chat-template`: Force using the model chat template (recommended for instruction-tuned models)
+- `--no-chat-template`: Force disabling the model chat template (recommended for base models)
+    - If neither flag is set, lighteval infers chat template availability from the tokenizer config; some base models ship a chat template even when they should be treated as base, so use `--no-chat-template` to avoid unintended prompting.
 
 **vLLM-specific options:**
 - `--vllm-gpu-memory-utilization`: GPU memory usage (default: 0.9)
-- `--vllm-max-model-len`: Maximum sequence length
 - `--vllm-tensor-parallel-size`: Number of GPUs for tensor parallelism
 
 ### Using Lighteval Directly
@@ -135,9 +138,8 @@ Cyber Threat Intelligence benchmark:
 - `cti_bench:cti-mcq` - Multiple choice questions (loglikelihood)
 - `cti_bench:cti-mcq_em` - MCQ with extracted letter scoring (generative, full response)
 - `cti_bench:cti-mcq_em_direct` - MCQ with extracted letter scoring (generative, direct answer line)
-- `cti_bench:cti-rcm` - Root Cause Mapping (generative, single line)
-- `cti_bench:cti-rcm_em` - RCM with extracted CWE scoring (generative, full response)
-- `cti_bench:cti-rcm_em_direct` - RCM with extracted CWE scoring (generative, direct answer line)
+- `cti_bench:cti-rcm_em` - Root Cause Mapping with extracted CWE scoring (generative, full response)
+- `cti_bench:cti-rcm_em_direct` - RCM with extracted CWE scoring (generative, direct answer line; better for few-shot setting)
 
 ### MMLU Computer Security
 
@@ -189,9 +191,10 @@ RedSage's internal cybersecurity benchmark covering multiple domains:
 
 Text files that group multiple tasks for convenience (pass one of these to `--tasks`):
 
-- `tasks/redsage_mcqs.txt` - RedSage MCQ subsets (0-shot sample)
-- `tasks/related_benchmarks_ins.txt` - Instruction-tuned related cybersecurity benchmarks (0-shot sample)
+- `tasks/redsage_mcqs_base.txt` - Base-model RedSage MCQ subsets with log-probability evaluation (0-shot sample)
+- `tasks/redsage_mcqs_ins.txt` - Instruction-tuned RedSage MCQ subsets with generation evaluation (0-shot sample)
 - `tasks/related_benchmarks_base.txt` - Base-model related cybersecurity benchmarks (5-shot sample)
+- `tasks/related_benchmarks_ins.txt` - Instruction-tuned related cybersecurity benchmarks (0-shot sample)
 
 ## Advanced Usage
 
@@ -247,7 +250,7 @@ python eval/run_lighteval.py vllm \
     --model RISys-Lab/RedSage-Qwen3-8B-Ins \
     --tasks cybermetrics:500 \
     --vllm-gpu-memory-utilization 0.8 \
-    --vllm-max-model-len 16384 \
+    --max-model-len 16384 \
     --output-dir results/custom_vllm
 ```
 
@@ -319,7 +322,7 @@ If you run out of GPU memory:
    python eval/run_lighteval.py vllm \
        --model RISys-Lab/RedSage-Qwen3-8B-Ins \
        --tasks cybermetrics:80 \
-       --vllm-max-model-len 4096
+       --max-model-len 4096
    ```
 
 
