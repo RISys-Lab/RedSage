@@ -795,11 +795,6 @@ class CTIBenchEvalTask(LightevalTaskConfig):
             metrics = [cti_rcm_metrics]
             generation_size = 100
             stop_sequence = ["\n"]
-        # elif name == "cti_bench:cti-rcm":
-        #     prompt_fn = cti_rcm_prompt_fn
-        #     metrics = [cti_rcm_metrics]
-        #     generation_size = 100
-        #     stop_sequence = ["\n"]
         else:
             raise ValueError(f"Unknown task name '{name}' for CTI-Bench evaluation task.")
         super().__init__(
