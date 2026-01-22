@@ -197,7 +197,16 @@ def main() -> None:
 		include_stderr=not args.no_stderr,
 		split_metrics=args.split_metrics,
 	)
-	print(f"Wrote {count} rows to {args.output}")
+	if args.split_metrics:
+		stem = args.output.stem
+		suffix = args.output.suffix
+		output_dir = args.output.parent
+		print(
+			f"Wrote {count} rows to metric-specific CSV files in {output_dir} "
+			f"with pattern '{stem}_<metric>{suffix}'"
+		)
+	else:
+		print(f"Wrote {count} rows to {args.output}")
 
 
 if __name__ == "__main__":
