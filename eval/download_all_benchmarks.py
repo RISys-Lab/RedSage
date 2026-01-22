@@ -11,6 +11,7 @@ import sys
 
 CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
 sys.path.append(os.path.dirname(CURRENT_DIR))
+sys.path.append(CURRENT_DIR)
 
 from cybersecurity_benchmarks import TASKS_TABLE
 from datasets import load_dataset

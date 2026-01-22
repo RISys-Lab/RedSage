@@ -93,7 +93,7 @@ def list_tasks():
     
     Displays a formatted list of all available evaluation tasks grouped by their
     benchmark category. For curated tasks, displays file paths. For lighteval tasks,
-    displays the task specification in the format required for command-line execution.
+    displays the task specification with a placeholder few-shot count (|n).
     
     Returns:
         None
