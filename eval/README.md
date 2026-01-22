@@ -260,7 +260,7 @@ For full control, use `lighteval` directly:
 
 ```bash
 # Single task with vLLM
-lighteval vllm "model_name=RISys-Lab/RedSage-Qwen3-8B-Ins,gpu_memory_utilisation=0.9" \
+lighteval vllm "model_name=RISys-Lab/RedSage-Qwen3-8B-Ins,gpu_memory_utilization=0.9" \
     --custom-tasks eval/cybersecurity_benchmarks.py \
     --output-dir results/ \
     "cybermetrics:80|0"

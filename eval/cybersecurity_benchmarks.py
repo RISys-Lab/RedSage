@@ -428,7 +428,7 @@ def cti_rcm_prompt_fn(line: Dict, task_name: Optional[str] = None, is_direct_ans
         query=prompt,
         choices=[solution],
         gold_index=0,
-        instruction=instruction,
+        instruction=instruction_new,
         specific={"url": line.get("URL"), "Description": line.get("Description"), "GT": solution},
     )
 
