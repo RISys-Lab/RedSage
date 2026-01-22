@@ -163,12 +163,14 @@ def main() -> None:
     parser.add_argument(
         "input",
         type=Path,
+        nargs='?',
         default=Path("results/redsage_mcq"),
         help="Root directory containing JSON result files.",
     )
     parser.add_argument(
         "output",
         type=Path,
+        nargs='?',
         default=Path("results/redsage_mcq_summary.csv"),
         help="Output CSV path.",
     )
