@@ -1,6 +1,7 @@
 # RedSage: A Cybersecurity Generalist LLM
 
 <p align="center">
+    <a href="https://risys-lab.github.io/RedSage/"><img src="https://img.shields.io/badge/Project-Page-Green"></a>
     <a href="https://openreview.net/forum?id=W4FAenIrQ2"><img src="https://img.shields.io/badge/Paper-OpenReview-B31B1B.svg"></a>
     <a href="https://huggingface.co/RISys-Lab"><img src="https://img.shields.io/badge/%F0%9F%A4%97%20Hugging%20Face-RISys--Lab-orange"></a>
     <img src="https://img.shields.io/badge/Python-3.10%2B-blue">
@@ -8,9 +9,10 @@
 </p>
 
 <p align="center">
+  🌐 <a href="https://risys-lab.github.io/RedSage/">Project Page</a>&nbsp;&nbsp;|&nbsp;&nbsp;
   🤖 <a href="https://huggingface.co/collections/RISys-Lab/redsage-models">Model Collection</a>&nbsp;&nbsp;|&nbsp;&nbsp;
   📊 <a href="https://huggingface.co/collections/RISys-Lab/redsage-benchmarks">Benchmark Collection</a>&nbsp;&nbsp;|&nbsp;&nbsp;
-  📘 <a href="https://huggingface.co/collections/RISys-Lab/redsage-datasets">Data Collection </a> (Coming Soon)
+  📘 <a href="https://huggingface.co/collections/RISys-Lab/redsage-datasets">Data Collection </a>
 </p>
 
 **Official repository for "RedSage: A Cybersecurity Generalist LLM" (ICLR 2026).**
