@@ -9,8 +9,8 @@
 
 <p align="center">
   🤖 <a href="https://huggingface.co/collections/RISys-Lab/redsage-models">Model Collection</a>&nbsp;&nbsp;|&nbsp;&nbsp;
-  📘 <a href="https://huggingface.co/collections/RISys-Lab/redsage-datasets">Data Collection</a>&nbsp;&nbsp;|&nbsp;&nbsp;
-  📊 <a href="https://huggingface.co/collections/RISys-Lab/redsage-benchmarks">Benchmark Collection</a>
+  📊 <a href="https://huggingface.co/collections/RISys-Lab/redsage-benchmarks">Benchmark Collection</a>&nbsp;&nbsp;|&nbsp;&nbsp;
+  📘 <a href="https://huggingface.co/collections/RISys-Lab/redsage-datasets">Data Collection </a> (Coming Soon)
 </p>
 
 **Official repository for "RedSage: A Cybersecurity Generalist LLM" (ICLR 2026).**
@@ -30,11 +30,11 @@
 - [Build with RedSage](#-build-with-redsage)
 - [Data](#-data)
 - [Evaluation](#-evaluation)
-- [Results Summary](#-results-summary)
 - [Responsible Use](#-responsible-use)
 - [Citation](#-citation)
 
 ## 📰 News
+- 2026-01-26: Our paper has been accepted to ICLR 2026! We will release all the code, models, and datasets gradually. Please stay tuned!
 - 2026-01-14: Added inference, deployment, and evaluation code (except OpenQA).
 - 2025-10-14: Update the README.md
 <!-- - 2025-08-12: Public release of **RedSage-Qwen3-8B-Base**, **-Ins**, **-DPO**.  
@@ -52,7 +52,7 @@ We are releasing RedSage sequentially in four phases. Track progress here (we’
 - [ ] Publish `RedSage-Qwen3-8B-Base` on Hugging Face (weights + model card)
 - [x] Publish `RedSage-Qwen3-8B-Ins` on Hugging Face (weights + model card)
 - [x] Publish `RedSage-Qwen3-8B-DPO` on Hugging Face (weights + model card)
-- [x] Publish `RedSage-Qwen3-8B-CFW` on Hugging Face (weights + model card)
+- [ ] Publish `RedSage-Qwen3-8B-CFW` on Hugging Face (weights + model card)
 - [ ] Publish `RedSage-Qwen3-8B-Seed` on Hugging Face (weights + model card)
 - [x] Provide `inference/hf_chat.py` (Transformers chat example)
 - [x] Provide `inference/vllm_demo.py` (simple client)
@@ -102,15 +102,19 @@ We are releasing RedSage sequentially in four phases. Track progress here (we’
 
 | Model | Type | Best For | Link |
 | :--- | :--- | :--- | :--- |
-| **RedSage-8B-Base** | Base | Domain adaptation, further fine-tuning. | [🤗 Link](https://huggingface.co/RISys-Lab/RedSage-Qwen3-8B-Base) |
+| **RedSage-8B-Base** | Base | Domain adaptation, further fine-tuning. | Coming Soon |
 | **RedSage-8B-Ins** | Instruct | Multi-turn chat, step-by-step security explanations. | [🤗 Link](https://huggingface.co/RISys-Lab/RedSage-Qwen3-8B-Ins) |
 | **RedSage-8B-DPO** | Chat | Production-ready assistants with aligned behavior. | [🤗 Link](https://huggingface.co/RISys-Lab/RedSage-Qwen3-8B-DPO) |
+
+<!-- [🤗 Link](https://huggingface.co/RISys-Lab/RedSage-Qwen3-8B-Base) -->
 
 <details>
   <summary><b>Previous / Experimental Variants</b></summary>
 
-- **RedSage-Qwen3-8B-CFW** ([🤗 Model Card](https://huggingface.co/RISys-Lab/RedSage-Qwen3-8B-CFW)) — CPT on cybersecurity-filtered web only (ablation).  
-- **RedSage-Qwen3-8B-Seed** ([🤗 Model Card](https://huggingface.co/RISys-Lab/RedSage-Qwen3-8B-Seed)) — CPT on curated seed sources only (ablation).
+- **RedSage-Qwen3-8B-CFW** (Coming Soon) — CPT on cybersecurity-filtered web only (ablation).  
+- **RedSage-Qwen3-8B-Seed** (Coming Soon) — CPT on curated seed sources only (ablation).
+<!-- - **RedSage-Qwen3-8B-CFW** ([🤗 Model Card](https://huggingface.co/RISys-Lab/RedSage-Qwen3-8B-CFW)) — CPT on cybersecurity-filtered web only (ablation).  
+- **RedSage-Qwen3-8B-Seed** ([🤗 Model Card](https://huggingface.co/RISys-Lab/RedSage-Qwen3-8B-Seed)) — CPT on curated seed sources only (ablation). -->
 </details>
 
 ---
@@ -255,13 +259,6 @@ python eval/run_lighteval.py vllm \
 
 ---
 
-
-## 📊 Results Summary
-
-Coming Soon.
-
----
-
 ## ⚖️ Responsible Use
 
 RedSage is released for **research and educational purposes only**. It contains offensive security knowledge that must be used ethically. Users are responsible for ensuring compliance with local laws.
@@ -274,10 +271,9 @@ RedSage is released for **research and educational purposes only**. It contains 
 @inproceedings{suryanto2026redsage,
   title={RedSage: A Cybersecurity Generalist {LLM}},
   author={Suryanto, Naufal and Naseer, Muzammal and Li, Pengfei and Wasim, Syed Talal and Yi, Jinhui and Gall, Juergen and Ceravolo, Paolo and Damiani, Ernesto},
-  booktitle={Submitted to ICLR 2026},
+  booktitle={The Fourteenth International Conference on Learning Representations},
   year={2026},
   url={https://openreview.net/forum?id=W4FAenIrQ2},
-  note={under review}
 }
 ```
 
