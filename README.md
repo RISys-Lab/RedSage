@@ -274,10 +274,9 @@ RedSage is released for **research and educational purposes only**. It contains 
 @inproceedings{suryanto2026redsage,
   title={RedSage: A Cybersecurity Generalist {LLM}},
   author={Suryanto, Naufal and Naseer, Muzammal and Li, Pengfei and Wasim, Syed Talal and Yi, Jinhui and Gall, Juergen and Ceravolo, Paolo and Damiani, Ernesto},
-  booktitle={Submitted to ICLR 2026},
+  booktitle={The Fourteenth International Conference on Learning Representations},
   year={2026},
   url={https://openreview.net/forum?id=W4FAenIrQ2},
-  note={under review}
 }
 ```
 
