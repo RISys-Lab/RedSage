@@ -102,7 +102,7 @@ We are releasing RedSage sequentially in four phases. Track progress here (we’
 
 | Model | Type | Best For | Link |
 | :--- | :--- | :--- | :--- |
-| **RedSage-8B-Base** | Base | Domain adaptation, further fine-tuning. | Coming Soon |
+| **RedSage-8B-Base** | Base | Domain adaptation, further fine-tuning. | [🤗 Link](https://huggingface.co/RISys-Lab/RedSage-Qwen3-8B-Base) |
 | **RedSage-8B-Ins** | Instruct | Multi-turn chat, step-by-step security explanations. | [🤗 Link](https://huggingface.co/RISys-Lab/RedSage-Qwen3-8B-Ins) |
 | **RedSage-8B-DPO** | Chat | Production-ready assistants with aligned behavior. | [🤗 Link](https://huggingface.co/RISys-Lab/RedSage-Qwen3-8B-DPO) |
 
@@ -111,10 +111,8 @@ We are releasing RedSage sequentially in four phases. Track progress here (we’
 <details>
   <summary><b>Previous / Experimental Variants</b></summary>
 
-- **RedSage-Qwen3-8B-CFW** (Coming Soon) — CPT on cybersecurity-filtered web only (ablation).  
-- **RedSage-Qwen3-8B-Seed** (Coming Soon) — CPT on curated seed sources only (ablation).
-<!-- - **RedSage-Qwen3-8B-CFW** ([🤗 Model Card](https://huggingface.co/RISys-Lab/RedSage-Qwen3-8B-CFW)) — CPT on cybersecurity-filtered web only (ablation).  
-- **RedSage-Qwen3-8B-Seed** ([🤗 Model Card](https://huggingface.co/RISys-Lab/RedSage-Qwen3-8B-Seed)) — CPT on curated seed sources only (ablation). -->
+- **RedSage-Qwen3-8B-CFW** ([🤗 Model Card](https://huggingface.co/RISys-Lab/RedSage-Qwen3-8B-CFW)) — CPT on cybersecurity-filtered web only (ablation).  
+- **RedSage-Qwen3-8B-Seed** ([🤗 Model Card](https://huggingface.co/RISys-Lab/RedSage-Qwen3-8B-Seed)) — CPT on curated seed sources only (ablation).
 </details>
 
 ---
