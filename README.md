@@ -10,7 +10,7 @@
 <p align="center">
   🤖 <a href="https://huggingface.co/collections/RISys-Lab/redsage-models">Model Collection</a>&nbsp;&nbsp;|&nbsp;&nbsp;
   📊 <a href="https://huggingface.co/collections/RISys-Lab/redsage-benchmarks">Benchmark Collection</a>&nbsp;&nbsp;|&nbsp;&nbsp;
-  📘 <a href="https://huggingface.co/collections/RISys-Lab/redsage-datasets">Data Collection (Coming Soon)</a>
+  📘 <a href="https://huggingface.co/collections/RISys-Lab/redsage-datasets">Data Collection </a> (Coming Soon)
 </p>
 
 **Official repository for "RedSage: A Cybersecurity Generalist LLM" (ICLR 2026).**
