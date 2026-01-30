@@ -50,10 +50,10 @@ We are releasing RedSage sequentially in four phases. Track progress here (we’
   <summary><b>View checklist</b></summary>
 
 #### 1) Model & Inference
-- [ ] Publish `RedSage-Qwen3-8B-Base` on Hugging Face (weights + model card)
-- [x] Publish `RedSage-Qwen3-8B-Ins` on Hugging Face (weights + model card)
 - [x] Publish `RedSage-Qwen3-8B-DPO` on Hugging Face (weights + model card)
-- [ ] Publish `RedSage-Qwen3-8B-CFW` on Hugging Face (weights + model card)
+- [x] Publish `RedSage-Qwen3-8B-Ins` on Hugging Face (weights + model card)
+- [x] Publish `RedSage-Qwen3-8B-Base` on Hugging Face (weights + model card)
+- [x] Publish `RedSage-Qwen3-8B-CFW` on Hugging Face (weights + model card)
 - [ ] Publish `RedSage-Qwen3-8B-Seed` on Hugging Face (weights + model card)
 - [x] Provide `inference/hf_chat.py` (Transformers chat example)
 - [x] Provide `inference/vllm_demo.py` (simple client)
