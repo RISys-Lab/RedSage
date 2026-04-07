@@ -1,6 +1,7 @@
 # RedSage: A Cybersecurity Generalist LLM
 
 <p align="center">
+    <a href="https://arxiv.org/abs/2601.22159"><img src="https://img.shields.io/badge/Paper-ArXiv-B31B1B.svg"></a>
     <a href="https://openreview.net/forum?id=W4FAenIrQ2"><img src="https://img.shields.io/badge/Paper-OpenReview-B31B1B.svg"></a>
     <a href="https://huggingface.co/RISys-Lab"><img src="https://img.shields.io/badge/%F0%9F%A4%97%20Hugging%20Face-RISys--Lab-orange"></a>
     <img src="https://img.shields.io/badge/Python-3.10%2B-blue">
