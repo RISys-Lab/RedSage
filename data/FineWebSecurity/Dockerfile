@@ -46,7 +46,7 @@ COPY requirements.txt /app/requirements.txt
 # Install dependencies in the conda environment
 RUN source /opt/conda/etc/profile.d/conda.sh && \
     conda activate huggingface && \
-    pip install torch && \
+    pip install --no-cache-dir --index-url https://download.pytorch.org/whl/cu121 torch && \
     pip install --no-cache-dir -r requirements.txt
 
 # Copy the rest of the application

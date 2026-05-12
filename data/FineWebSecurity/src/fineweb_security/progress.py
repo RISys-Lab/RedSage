@@ -32,9 +32,25 @@ def load_progress(progress_file: str) -> Progress:
         logger.warning("Progress file %s is not a JSON object. Starting from 0.", progress_file)
         return Progress()
 
+    def _parse_non_negative_int(value: object, field_name: str) -> int:
+        try:
+            parsed = int(value or 0)
+        except (TypeError, ValueError):
+            logger.warning(
+                "Progress file %s has invalid %s=%r. Falling back to 0.",
+                progress_file,
+                field_name,
+                value,
+            )
+            return 0
+        return max(parsed, 0)
+
     return Progress(
-        parquet_idx=int(content.get("parquet_idx", 0) or 0),
-        parquet_sample_idx=int(content.get("parquet_sample_idx", 0) or 0),
+        parquet_idx=_parse_non_negative_int(content.get("parquet_idx", 0), "parquet_idx"),
+        parquet_sample_idx=_parse_non_negative_int(
+            content.get("parquet_sample_idx", 0),
+            "parquet_sample_idx",
+        ),
     )
 
 
@@ -53,4 +69,3 @@ def save_progress(progress_file: str, parquet_idx: int, parquet_sample_idx: int)
 
 def default_progress_path(output_path: str, dataset_subset: str) -> str:
     return os.path.join(output_path, f"{dataset_subset}_filter_progress.json")
-

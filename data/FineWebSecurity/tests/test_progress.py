@@ -1,5 +1,3 @@
-import json
-
 from fineweb_security.progress import Progress, default_progress_path, load_progress, save_progress
 
 
@@ -25,3 +23,18 @@ def test_default_progress_path():
         "outputs/CC-MAIN-2024-18_filter_progress.json"
     )
 
+
+def test_load_progress_invalid_or_negative_values(tmp_path):
+    invalid_file = tmp_path / "invalid_values.json"
+    invalid_file.write_text(
+        '{"parquet_idx": "bad", "parquet_sample_idx": "7"}',
+        encoding="utf-8",
+    )
+    assert load_progress(str(invalid_file)) == Progress(parquet_idx=0, parquet_sample_idx=7)
+
+    negative_file = tmp_path / "negative_values.json"
+    negative_file.write_text(
+        '{"parquet_idx": -3, "parquet_sample_idx": -2}',
+        encoding="utf-8",
+    )
+    assert load_progress(str(negative_file)) == Progress(parquet_idx=0, parquet_sample_idx=0)

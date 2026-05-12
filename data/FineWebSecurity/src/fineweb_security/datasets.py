@@ -73,7 +73,10 @@ class FineWebDataset:
                 )
                 if offset == 0 and start_sample_idx > 0:
                     logger.info("Skipping %d examples in %s.", start_sample_idx, parquet_file)
-                    dataset = dataset.skip(start_sample_idx)
+                    if streaming:
+                        dataset = dataset.skip(start_sample_idx)
+                    else:
+                        dataset = dataset.select(range(start_sample_idx, len(dataset)))
 
                 yield dataset, parquet_file, parquet_idx
             except Exception:

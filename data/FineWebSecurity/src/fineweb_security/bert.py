@@ -24,7 +24,7 @@ def load_model(
     ).to(device)
     model.eval()
 
-    if compile_model and hasattr(torch, "compile") and torch.__version__ >= "2.0.0" and device == "cuda":
+    if compile_model and hasattr(torch, "compile") and device == "cuda":
         try:
             logger.info("Compiling model with torch.compile().")
             model = torch.compile(model)
@@ -49,8 +49,14 @@ def predict_batch(token_data: Dict[str, List[int]], model: torch.nn.Module) -> n
 
 
 def warmup_model(model: torch.nn.Module, tokenizer: Any, batch_size: int, max_length: int, device: str) -> None:
-    dummy_input_ids = torch.randint(0, tokenizer.vocab_size, (batch_size, max_length))
-    dummy_attention_mask = torch.ones((batch_size, max_length))
+    warmup_batch_size = max(1, min(batch_size, 8))
+    warmup_max_length = max(1, min(max_length, 32))
+    dummy_input_ids = torch.randint(
+        0,
+        tokenizer.vocab_size,
+        (warmup_batch_size, warmup_max_length),
+    )
+    dummy_attention_mask = torch.ones((warmup_batch_size, warmup_max_length))
     predict_batch(
         {
             "input_ids": dummy_input_ids.tolist(),

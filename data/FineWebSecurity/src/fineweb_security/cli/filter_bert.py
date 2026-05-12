@@ -11,7 +11,6 @@ from typing import Any, Dict, List
 import numpy as np
 import torch
 from multiprocess import Manager, set_start_method
-from tqdm import tqdm
 
 from fineweb_security.bert import load_model, predict_batch, warmup_model
 from fineweb_security.datasets import FineWebDataset
@@ -113,7 +112,7 @@ def process_batch(
     last_processed_index = batch_indices[-1]
     current_batch_number = last_processed_index // max(len(batch_indices), 1)
     if current_batch_number % save_frequency == 0:
-        save_progress(progress_file, parquet_idx, last_processed_index)
+        save_progress(progress_file, parquet_idx, last_processed_index + 1)
 
 
 def _add_arguments(parser: argparse.ArgumentParser) -> None:
@@ -189,7 +188,11 @@ def main(argv: List[str] | None = None) -> None:
 
     os.makedirs(subset_output_dir(args.output_path, args.dataset_subset), exist_ok=True)
     progress_file = args.progress_path or default_progress_path(args.output_path, args.dataset_subset)
+    progress_file_exists = os.path.exists(progress_file)
     progress = load_progress(progress_file)
+    if not progress_file_exists and args.start_idx > 0:
+        progress = type(progress)(parquet_idx=args.start_idx, parquet_sample_idx=0)
+        logger.info("Progress file not found. Starting from parquet index %d.", args.start_idx)
 
     manager = Manager()
     save_queue = manager.Queue(maxsize=args.save_queue_size)
@@ -201,13 +204,16 @@ def main(argv: List[str] | None = None) -> None:
     )
     save_thread.start()
 
-    models = []
-    tokenizer = None
-    for worker_idx in range(args.parallel_worker):
-        model, tokenizer = load_model(args.model_name, args.device, args.cache_dir, args.compile_model)
-        warmup_model(model, tokenizer, args.batch_size, args.max_length, args.device)
-        logger.info("Model %d warmup complete.", worker_idx + 1)
-        models.append(model)
+    model, tokenizer = load_model(args.model_name, args.device, args.cache_dir, args.compile_model)
+    warmup_model(model, tokenizer, args.batch_size, args.max_length, args.device)
+    logger.info("Model warmup complete.")
+    models = [model]
+    if args.parallel_worker > 1:
+        logger.warning(
+            "Inference multiprocessing is disabled for model safety. "
+            "Ignoring parallel_worker=%d during inference.",
+            args.parallel_worker,
+        )
 
     fineweb = FineWebDataset(cache_dir=args.cache_dir)
     total_parquet_files = len(fineweb.get_parquet_list(args.dataset_subset))
@@ -261,11 +267,11 @@ def main(argv: List[str] | None = None) -> None:
             logger.info("Running inference for %s.", parquet_file)
             try:
                 tokenized_dataset.map(
-                    lambda batch, batch_indices, rank_idx: process_batch(
+                    lambda batch, batch_indices: process_batch(
                         batch,
                         models,
                         batch_indices,
-                        rank_idx,
+                        None,
                         args.threshold,
                         current_output_dir,
                         save_queue,
@@ -276,9 +282,7 @@ def main(argv: List[str] | None = None) -> None:
                     batched=True,
                     batch_size=args.batch_size,
                     with_indices=True,
-                    with_rank=True,
                     desc=f"Processing {parquet_file}",
-                    num_proc=args.parallel_worker,
                 )
             except Exception:
                 logger.exception("Error during processing of %s. Skipping to next file.", parquet_file)
