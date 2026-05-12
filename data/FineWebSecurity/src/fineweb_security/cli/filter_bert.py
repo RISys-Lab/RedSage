@@ -23,7 +23,7 @@ from fineweb_security.persistence import (
     subset_output_dir,
     write_filtered_parquet,
 )
-from fineweb_security.progress import default_progress_path, load_progress, save_progress
+from fineweb_security.progress import Progress, default_progress_path, load_progress, save_progress
 
 os.environ["TORCHDYNAMO_CAPTURE_SCALAR_OUTPUTS"] = "1"
 
@@ -82,7 +82,6 @@ def process_batch(
     batch_data: Dict[str, List[Any]],
     models: List[torch.nn.Module],
     batch_indices: List[int],
-    rank_idx: int | None,
     threshold: float,
     output_path: str,
     save_queue: Any,
@@ -94,8 +93,7 @@ def process_batch(
         "input_ids": batch_data.pop("input_ids"),
         "attention_mask": batch_data.pop("attention_mask"),
     }
-    model_idx = (rank_idx or 0) % len(models)
-    probabilities = predict_batch(token_data, models[model_idx])
+    probabilities = predict_batch(token_data, models[0])
 
     relevant_indices = np.where(probabilities >= threshold)[0]
     for idx_in_batch in relevant_indices:
@@ -191,7 +189,7 @@ def main(argv: List[str] | None = None) -> None:
     progress_file_exists = os.path.exists(progress_file)
     progress = load_progress(progress_file)
     if not progress_file_exists and args.start_idx > 0:
-        progress = type(progress)(parquet_idx=args.start_idx, parquet_sample_idx=0)
+        progress = Progress(parquet_idx=args.start_idx, parquet_sample_idx=0)
         logger.info("Progress file not found. Starting from parquet index %d.", args.start_idx)
 
     manager = Manager()
@@ -271,7 +269,6 @@ def main(argv: List[str] | None = None) -> None:
                         batch,
                         models,
                         batch_indices,
-                        None,
                         args.threshold,
                         current_output_dir,
                         save_queue,

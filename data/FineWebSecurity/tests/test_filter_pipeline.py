@@ -38,7 +38,6 @@ def test_process_batch_filters_by_threshold(monkeypatch, tmp_path):
         batch,
         models=[object()],
         batch_indices=[10, 11],
-        rank_idx=0,
         threshold=0.875,
         output_path=str(tmp_path),
         save_queue=queue,

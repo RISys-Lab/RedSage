@@ -5,6 +5,8 @@ import numpy as np
 import torch
 
 logger = logging.getLogger(__name__)
+WARMUP_MAX_BATCH_SIZE = 8
+WARMUP_MAX_SEQUENCE_LENGTH = 32
 
 
 def load_model(
@@ -49,8 +51,8 @@ def predict_batch(token_data: Dict[str, List[int]], model: torch.nn.Module) -> n
 
 
 def warmup_model(model: torch.nn.Module, tokenizer: Any, batch_size: int, max_length: int, device: str) -> None:
-    warmup_batch_size = max(1, min(batch_size, 8))
-    warmup_max_length = max(1, min(max_length, 32))
+    warmup_batch_size = max(1, min(batch_size, WARMUP_MAX_BATCH_SIZE))
+    warmup_max_length = max(1, min(max_length, WARMUP_MAX_SEQUENCE_LENGTH))
     dummy_input_ids = torch.randint(
         0,
         tokenizer.vocab_size,
