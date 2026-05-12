@@ -1,0 +1,11 @@
+torch
+transformers
+datasets
+prefetch-generator
+huggingface_hub
+hf_xet
+multiprocess
+tqdm
+numpy<2
+requests
+pyarrow
