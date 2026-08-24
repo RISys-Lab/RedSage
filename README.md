@@ -218,11 +218,15 @@ See **[`training/README.md`](training/README.md)** for:
 
 ## 📂 Data
 
-* **Cybersecurity-filtered corpus** with global dedup; includes a small general-domain replay to reduce forgetting.
-* **RedSage-Seed:** curated Knowledge / Skills / Tools sources.
-* **RedSage-Conv:** agentically generated, multi-turn, role-grounded dialogues with automatic validation.
+The released datasets are available in the [RedSage Datasets collection](https://huggingface.co/collections/RISys-Lab/redsage-datasets).
 
-Licenses and source notes are documented in [`data/README.md`](data/README.md).
+| Dataset | Training Stage | Scale | Description | Link |
+| :--- | :--- | :--- | :--- | :--- |
+| **RedSage-CFW** | Continual pretraining | ~13M documents / ~11.7B tokens | Cybersecurity-filtered FineWeb corpus with general-domain replay and global deduplication. | [🤗 Dataset](https://huggingface.co/datasets/RISys-Lab/RedSage-CFW) |
+| **RedSage-Seed** | Continual pretraining and data augmentation | 28,637 samples / ~150M tokens | Curated, authoritative cybersecurity resources spanning knowledge, skills, and tools. | [🤗 Dataset](https://huggingface.co/datasets/RISys-Lab/RedSage-Seed) |
+| **RedSage-Conv** | Supervised fine-tuning | 265,388 multi-turn conversations | Agentically generated, role-grounded cybersecurity dialogues with automatic validation. | [🤗 Dataset](https://huggingface.co/datasets/RISys-Lab/RedSage-Conv) |
+
+The source code for generating the released data is documented in [`data/README.md`](data/README.md).
 
 ---
 
